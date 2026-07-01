@@ -99,18 +99,31 @@ def link_ports(spec, a, b):
     return {(spec.sw_to_dpid(a), e['lport']), (spec.sw_to_dpid(b), e['rport'])}
 
 
-def build_plan(spec, rng):
-    """Timed fault plan + matching label intervals, derived from the spec.
+def active_links(spec, collector, thr=200.0):
+    """Inter-switch links currently carrying traffic (the STP-active path)."""
+    out = []
+    for (a, pa, b, pb, bw, d) in spec.SWITCH_LINKS:
+        ta = collector.telemetry.get((spec.sw_to_dpid(a), pa), {}).get('throughput_kbps', 0)
+        tb = collector.telemetry.get((spec.sw_to_dpid(b), pb), {}).get('throughput_kbps', 0)
+        if max(ta, tb) > thr:
+            out.append((a, pa, b, pb, bw, d))
+    return out
 
-    Returns (events, total_dur). Each event: (t, fn) where fn mutates the live
-    net and the `active` label list. Faults are spaced by GAP normal seconds.
+
+def build_plan(spec, rng, active):
+    """Timed fault plan + matching label intervals, over ACTIVE (observable)
+    elements only -- a fault on an idle backup link carries no traffic and is
+    undetectable from telemetry (it is handled by port-status, not detection).
+
+    Returns (plan, total_dur). Faults are spaced by GAP normal seconds.
     """
-    links = list(spec.SWITCH_LINKS)
-    rng.shuffle(links)
-    chosen = links[:N_LINK_FAULTS]
-    switches_mid = [s for s in spec.SWITCHES
-                    if s not in ('s1', spec.SWITCHES[-1])]  # avoid edge switches
-    node = rng.choice(switches_mid)
+    links = list(active) or list(spec.SWITCH_LINKS)   # fall back if nothing active
+    # Cycle through the (few) active links to reach N_LINK_FAULTS observations.
+    chosen = [links[i % len(links)] for i in range(N_LINK_FAULTS)]
+    endpoints = {s for lk in links for s in (lk[0], lk[2])}
+    mids = [s for s in endpoints if s not in ('s1', spec.SWITCHES[-1])]
+    node = rng.choice(mids) if mids else rng.choice([s for s in spec.SWITCHES
+                                                     if s not in ('s1', spec.SWITCHES[-1])])
     flap_link = rng.choice(links)
 
     plan = []          # list of dicts describing each fault phase
@@ -143,17 +156,25 @@ def collect_one(spec, seed, writer, stats, quick):
     info('*** [%s seed=%d] STP converging (45s)...\n' % (topo_name, seed))
     net.get('s1').cmd('sleep 45')
 
-    plan, total = build_plan(spec, rng)
-    if quick:
-        plan, total = plan[:2], plan[1]['t'] + plan[1]['dur'] + GAP
-
     tg = TrafficGenerator(net, seed=seed)
-    tg.start_mix(dur=int(total) + 5, n_bursts=8)
+    tg.start_mix(dur=260, n_bursts=8)
 
     collector = TelemetryCollector()
-    topo = spec.__name__.split('.')[-1]
+    topo = topo_name
     active = []                 # currently-active label intervals
     cong_flood_ports = 5200
+
+    # warmup polls: seed byte baselines + throughput history, then detect the
+    # active (traffic-carrying) path so faults land where they are observable.
+    for _ in range(5):
+        _poll(net, spec, collector, None, None, topo, seed, time.time())
+        time.sleep(POLL)
+    act = active_links(spec, collector)
+    info('*** [%s] active links: %s\n' % (topo_name,
+         [(lk[0], lk[2]) for lk in act] or 'NONE'))
+    plan, total = build_plan(spec, rng, act)
+    if quick:
+        plan, total = plan[:2], plan[1]['t'] + plan[1]['dur'] + GAP
 
     def apply_phase(ph):
         if ph['kind'] == 'link':
@@ -243,10 +264,11 @@ def _poll(net, spec, collector, active, writer, topo, seed, run0, stats=None):
                 scen, is_fault = hit['scenario'], 1
             elif cong_on and tel['throughput_kbps'] > CONG_TH_KBPS:
                 scen = 'congestion'
-            n = collector.normalized((d, p))
+            fv = collector.feature_vector((d, p))   # [tput_n, loss_n, delay_n, drop_ratio]
             writer.writerow([topo, seed, t_rel, d, p,
                              tel['throughput_kbps'], tel['loss'], tel['delay_ms'],
-                             round(n[0], 4), round(n[1], 4), round(n[2], 4),
+                             round(fv[0], 4), round(fv[1], 4), round(fv[2], 4),
+                             round(tel['recent_max_kbps'], 3), tel['drop_ratio'],
                              scen, is_fault])
             if stats is not None:
                 stats[scen] += 1
@@ -264,7 +286,8 @@ def main():
         w = csv.writer(f)
         w.writerow(['topology', 'seed', 't_rel', 'dpid', 'port',
                     'throughput_kbps', 'loss', 'delay_ms',
-                    'tput_n', 'loss_n', 'delay_n', 'scenario', 'is_fault'])
+                    'tput_n', 'loss_n', 'delay_n', 'recent_max_kbps', 'drop_ratio',
+                    'scenario', 'is_fault'])
         specs = [(mesh_spec, 42), (mesh2_spec, 43)]
         for spec, seed in specs:
             print('=== collecting %s (seed %d) ===' % (spec.__name__, seed))

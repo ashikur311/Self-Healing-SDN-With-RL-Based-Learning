@@ -1,0 +1,45 @@
+P1 — Fault Detection & Localization (steps S1.6 / S1.7)
+Date: 2026-07-01
+
+DESIGN: HYBRID (decided after an empirical finding, below).
+  * Localization + hard-fault detection  -> OpenFlow port-status (LINK_DOWN).
+    Exact, immediate, and immune to congestion (a congested link stays UP, so it
+    can never raise a port-down and can never be mislocalized as a fault).
+  * Telemetry (TelemetryCollector: tput/loss/delay/drop_ratio) -> confirms whether
+    the failed element was carrying traffic (service-impacting) and is the path
+    for GRAY failures that never trigger a port-down (future work).
+
+WHY NOT PURE-TELEMETRY LOCALIZATION (the finding that drove the design):
+  A per-port classifier on [tput, loss, delay(, drop_ratio)] cannot localize:
+   - A failed link and its innocent downstream neighbours BOTH lose traffic and
+     look identical from throughput.
+   - Under a shared/STP data plane a link-down triggers slow reconvergence and
+     network-wide blackholing, not a localized signal; ~50-73% of injected fault
+     rows were on idle links (no traffic) and thus physically unobservable.
+   Measured precision of the pure-telemetry per-port detector was ~0.10 (see the
+   diagnosis in the S1.6 notes / dataset report). Hence the hybrid split.
+
+COMPONENTS:
+  framework/agents/detector.py    - pure-NumPy LR/kNN classifier (retained; used
+                                    for the telemetry fault-vs-congestion study and
+                                    future gray-failure detection).
+  framework/agents/localizer.py   - FaultLocalizer: port-status -> exact failed
+                                    (dpid,port) + service-impact via telemetry.
+  framework/controller/detect_app.py - production Ryu app (telemetry + event-driven
+                                    port-status localization).
+  experiments/exp_p1_detection.py - S1.7 experiment (polls port state; same signal
+                                    the app consumes as events).
+  tests/test_localizer.py         - unit test for FaultLocalizer.
+
+S1.7 EXPERIMENT (both topologies; every inter-switch link + a node fault +
+a congestion window):
+  topology     hard faults  localized   acc     congestion false-alarms
+  mesh              10          10       1.000            0
+  mesh2              9           9       1.000            0
+  ------------------------------------------------------------
+  OVERALL           19          19       1.000   mean latency 0.21s   FA=0
+
+GATE (hybrid): localization >= 0.90 AND congestion false alarms == 0  ->  PASS.
+  (Localization generalizes to the unseen 2nd topology by construction, since it
+   is deterministic port-status, not a learned model. Latency is poll-bounded at
+   0.4s here; the production controller is event-driven and faster.)

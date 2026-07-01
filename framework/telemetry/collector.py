@@ -38,16 +38,23 @@ class TelemetryCollector:
     """Stateful converter: raw OFPPortStats bodies -> normalized per-port state."""
 
     def __init__(self, tput_norm_kbps=TPUT_NORM_KBPS,
-                 delay_norm_ms=DELAY_NORM_MS, skip_local=True):
+                 delay_norm_ms=DELAY_NORM_MS, skip_local=True,
+                 window=6, min_active_kbps=100.0):
         self.tput_norm_kbps = tput_norm_kbps
         self.delay_norm_ms = delay_norm_ms
         self.skip_local = skip_local
         # (dpid,port) -> (bytes, packets, drops_errs, timestamp)
         self._prev = {}
-        # (dpid,port) -> {'throughput_kbps','loss','delay_ms'}
+        # (dpid,port) -> {'throughput_kbps','loss','delay_ms','recent_max_kbps','drop_ratio'}
         self.telemetry = {}
         # dpid -> timestamp the last stats request was sent (latency proxy)
         self._req_times = {}
+        # trailing throughput history per port -> recent_max + drop_ratio, the
+        # feature that separates "was active, now silent" (fault) from "always
+        # idle" (normal). Needed both for the dataset and the live detector.
+        self.window = window
+        self.min_active_kbps = min_active_kbps
+        self._hist = {}
 
     # -- called by the polling loop / event handlers -------------------------
     def mark_request(self, dpid, now=None):
@@ -80,9 +87,21 @@ class TelemetryCollector:
                 if denom > 0:
                     loss = d_bad / float(denom)
             self._prev[key] = (cur_bytes, cur_pkts, cur_bad, now)
+
+            hist = self._hist.setdefault(key, [])
+            hist.append(tput_kbps)
+            if len(hist) > self.window:
+                del hist[0]
+            recent_max = max(hist)
+            drop_ratio = 0.0
+            if recent_max > self.min_active_kbps:
+                drop_ratio = max(0.0, (recent_max - tput_kbps) / recent_max)
+
             self.telemetry[key] = {'throughput_kbps': round(tput_kbps, 3),
                                    'loss': round(loss, 4),
-                                   'delay_ms': delay_ms}
+                                   'delay_ms': delay_ms,
+                                   'recent_max_kbps': round(recent_max, 3),
+                                   'drop_ratio': round(drop_ratio, 4)}
             updated.append(key)
         return updated
 
@@ -95,6 +114,20 @@ class TelemetryCollector:
         return [min(t['throughput_kbps'] / self.tput_norm_kbps, 1.0),
                 min(t['loss'], 1.0),
                 min(t['delay_ms'] / self.delay_norm_ms, 1.0)]
+
+    def feature_vector(self, key):
+        """Detector features [tput_n, loss_n, delay_n, drop_ratio] in [0,1].
+
+        Matches framework/agents/detector.py FEATURES; used by the live closed
+        loop (S2.4) so the online detector sees the same inputs as training.
+        """
+        t = self.telemetry.get(key)
+        if t is None:
+            return [0.0, 0.0, 0.0, 0.0]
+        return [min(t['throughput_kbps'] / self.tput_norm_kbps, 1.0),
+                min(t['loss'], 1.0),
+                min(t['delay_ms'] / self.delay_norm_ms, 1.0),
+                t['drop_ratio']]
 
     def snapshot(self):
         """Plain-dict copy keyed by 'dpid:port' (JSON-friendly)."""
