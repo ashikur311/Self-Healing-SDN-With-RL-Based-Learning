@@ -1,0 +1,40 @@
+M2 (peer-review) — Recovery time by controller variant (honest attribution)
+===========================================================================
+Reviewer M2: the paper's headline "40 ms recovery" is the EVENT-DRIVEN controller
+(reroute_agent.py, port-status triggered). The paper's titular RL system
+(self_healing_agent.py, PPO decides from telemetry) recovers only as fast as its
+3 s telemetry poll -- ~2 orders of magnitude slower. Report BOTH and attribute the
+40 ms correctly.
+
+Measured with topology/measure_recovery.py, single mid-link fault (s2-s3), 20 ms
+probe resolution, on the identical topology.
+
+VERIFIED RESULTS (2026-07-01)
+-----------------------------
+Controller variant                          | recovery time      | what bounds it
+--------------------------------------------|--------------------|-------------------------
+Event-driven reroute (reroute_agent.py)     | 40 +/- 13 ms  (5c) | OF port-status event -> immediate OFPFlowMod
+PPO-driven (self_healing_agent.py)          | 3400 +/- 633 ms(3c)| 3 s telemetry poll interval (POLL_SECONDS=3)
+OpenFlow fast-failover (failover_agent.py)  | 52 +/- 10 ms (node)| data-plane liveness (node fault only; see M1)
+
+Per-cycle PPO outages: 3700, 2520, 3980 ms (tx=550 rx=365/424/351 at 20 ms spacing).
+
+Interpretation (honest, for the paper):
+- The 40 ms headline is the EVENT-DRIVEN controller. It must be attributed as such;
+  it is NOT the recovery time of the PPO decision path.
+- The PPO controller recovers in ~3.4 s because detection is bounded by the 3 s
+  OFPPortStats poll: a failed primary port must read zero throughput on a poll
+  before PPO can decide to reroute. The actuation itself (OFPFlowMod) is still
+  instant; the latency is entirely the telemetry cadence.
+- This reinforces the paper's central honest finding: the PPO agent is not what
+  makes recovery fast (and simple classifiers already match its detection). The
+  fast, deterministic path is the event-driven controller. PPO is best presented
+  as an ablation showing the RL framing adds latency without accuracy benefit
+  (feeds M3 retitle and M5 "demote PPO to ablation").
+- Lowering POLL_SECONDS would cut PPO recovery time but raises control-plane
+  overhead; an event-driven + PPO hybrid (event triggers, PPO confirms) is future
+  work.
+
+Reproduce:
+  ryu-manager controller/self_healing_agent.py & sudo python3 topology/measure_recovery.py 3 10.0 link
+  ryu-manager controller/reroute_agent.py      & sudo python3 topology/measure_recovery.py 5 2.0  link

@@ -1,0 +1,29 @@
+==== DATASET (fix #2 honest evaluation) ====
+rows: 133
+label counts after zero-throughput rule:
+congestion_label
+LINK_DOWN    68
+HIGH         42
+MEDIUM       16
+LOW           7
+binary -> fault: 110  normal: 23
+CAVEAT: 68 of 110 'fault' rows are zero-throughput (mostly idle/relabeled),
+        only 42 are real HIGH-congestion faults. Scores below reflect an
+        almost linearly separable, heuristically-labeled task.
+
+seed 0 | test n=40 | acc 0.950 prec 1.000 rec 0.939 f1 0.969
+seed 1 | test n=40 | acc 0.950 prec 1.000 rec 0.939 f1 0.969
+seed 2 | test n=40 | acc 0.925 prec 1.000 rec 0.909 f1 0.952
+seed 3 | test n=40 | acc 0.925 prec 1.000 rec 0.909 f1 0.952
+seed 4 | test n=40 | acc 0.950 prec 1.000 rec 0.939 f1 0.969
+
+==== RESULTS over 5 seeds (mean +/- std) ====
+accuracy : 0.940 +/- 0.012
+precision: 1.000 +/- 0.000
+recall   : 0.927 +/- 0.015
+f1       : 0.962 +/- 0.008
+
+Summed confusion matrix over all seeds/test-folds:
+                 pred_normal  pred_fault
+  true_normal             35           0
+  true_fault              12         153

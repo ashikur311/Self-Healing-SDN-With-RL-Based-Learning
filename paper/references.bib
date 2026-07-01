@@ -1,0 +1,113 @@
+% ============================================================
+% references.bib  (Self-Healing SDN paper)
+% Fix #6: every entry below was verified (2026-07-01) against the
+% publisher / indexing record -- authors, title, venue, year, volume,
+% pages, DOI. Two entries carried over from the thesis
+% (a "Zhou et al. 5G TNSM 2023" and a "Khan et al. Computer Networks
+% 2024 survey") could NOT be verified and did not match their in-text
+% citations, so they were REMOVED rather than kept. One thesis entry
+% was mis-attributed (title real, authors/venue wrong) and is CORRECTED
+% here (ferreira2019, formerly listed as "Sahu et al., IEEE TSG").
+% ============================================================
+
+% ---- Method / tooling references (a methods section must cite) ----
+@misc{schulman2017ppo,
+  author       = {Schulman, John and Wolski, Filip and Dhariwal, Prafulla and Radford, Alec and Klimov, Oleg},
+  title        = {Proximal Policy Optimization Algorithms},
+  year         = {2017},
+  eprint       = {1707.06347},
+  archivePrefix= {arXiv},
+  primaryClass = {cs.LG},
+  note         = {arXiv:1707.06347}
+}
+@inproceedings{lantz2010mininet,
+  author    = {Lantz, Bob and Heller, Brandon and McKeown, Nick},
+  title     = {A Network in a Laptop: Rapid Prototyping for Software-Defined Networks},
+  booktitle = {Proc. 9th ACM SIGCOMM Workshop on Hot Topics in Networks (HotNets-IX)},
+  articleno = {19},
+  year      = {2010},
+  doi       = {10.1145/1868447.1868466}
+}
+@misc{ryu,
+  author = {{Ryu SDN Framework Community}},
+  title  = {Ryu SDN Framework},
+  year   = {2017},
+  howpublished = {\url{https://ryu-sdn.org}},
+  note   = {Component-based OpenFlow controller; accessed 2026-07-01}
+}
+@misc{onf2012openflow,
+  author       = {{Open Networking Foundation}},
+  title        = {OpenFlow Switch Specification, Version 1.3.0 (Wire Protocol 0x04)},
+  year         = {2012},
+  howpublished = {ONF TS-006},
+  note         = {\url{https://opennetworking.org}}
+}
+@article{raffin2021sb3,
+  author  = {Raffin, Antonin and Hill, Ashley and Gleave, Adam and Kanervisto, Anssi and Ernestus, Maximilian and Dormann, Noah},
+  title   = {Stable-Baselines3: Reliable Reinforcement Learning Implementations},
+  journal = {Journal of Machine Learning Research},
+  volume  = {22}, number = {268}, pages = {1--8}, year = {2021},
+  note    = {\url{https://jmlr.org/papers/v22/20-1364.html}}
+}
+
+% ---- Related work: RL / ML for SDN congestion, routing, and recovery ----
+@article{boussaoud2025,
+  author  = {Boussaoud, Kaoutar and En-Nouaary, Abdeslam and Ayache, Meryeme},
+  title   = {Adaptive Congestion Detection and Traffic Control in Software-Defined Networks via Data-Driven Multi-Agent Reinforcement Learning},
+  journal = {Computers},
+  volume  = {14}, number = {6}, pages = {236}, year = {2025},
+  doi     = {10.3390/computers14060236}
+}
+@article{huang2025,
+  author  = {Huang, Wei and Gui, Wei and Li, Yong and Lv, Qiang and Zhang, Jing and He, Xiang},
+  title   = {Faulty Links' Fast Recovery Method Based on Deep Reinforcement Learning},
+  journal = {Algorithms},
+  volume  = {18}, number = {5}, pages = {241}, year = {2025},
+  doi     = {10.3390/a18050241},
+  note    = {Method is DDPG (DDPG-LBBP); the thesis mislabeled it ``Double DQN''.}
+}
+@article{hammad2023,
+  author  = {Hammad, Mohamed and Hewahi, Nabil and Elmedany, Wael},
+  title   = {Enhancing Network Intrusion Recovery in SDN with Machine Learning: An Innovative Approach},
+  journal = {Arab Journal of Basic and Applied Sciences},
+  volume  = {30}, number = {1}, pages = {561--572}, year = {2023},
+  doi     = {10.1080/25765299.2023.2261219},
+  note    = {Reports up to 90\% reduction in intrusion-recovery time.}
+}
+@inproceedings{neto2020,
+  author    = {de Souza Neto, Natal Vieira and Oliveira, Daniel Ricardo Cunha and Gon\c{c}alves, Maur\'icio Amaral and Silva, Fl\'avio de Oliveira and Rosa, Pedro Frosi},
+  title     = {A Self-healing Platform for the Control and Management Planes Communication in Softwarized and Virtualized Networks},
+  booktitle = {Proc. 10th Int. Conf. on Cloud Computing and Services Science (CLOSER)},
+  pages     = {415--422}, year = {2020},
+  doi       = {10.5220/0009465204150422}
+}
+@article{li2022rlops,
+  author  = {Li, Peizheng and Thomas, Jonathan and Wang, Xiaoyang and Khalil, Ahmed and Ahmad, Abdelrahim Kasem and Inacio, Rui and Kapoor, Shipra and Parekh, Arjun and Doufexi, Angela and Shojaeifard, Arman and Piechocki, Robert J.},
+  title   = {RLOps: Development Life-Cycle of Reinforcement Learning Aided Open RAN},
+  journal = {IEEE Access},
+  volume  = {10}, pages = {113808--113826}, year = {2022},
+  doi     = {10.1109/ACCESS.2022.3217511}
+}
+
+% ---- Related work: RL for self-healing / restoration (cross-domain, power grids) ----
+@article{kumar2023,
+  author  = {Kumar, Nand and Groenewald, Elma Sibonghanoy and Kulkarni, Shailesh and Ashifa, K. M. and Howard, E.},
+  title   = {Self-Healing Networks: AI-Based Approaches for Fault Detection and Recovery},
+  journal = {Power System Technology},
+  volume  = {47}, number = {4}, pages = {371--386}, year = {2023},
+  doi     = {10.52783/pst.206}
+}
+@article{jo2024,
+  author  = {Jo, Seungchan and Oh, Jae-Young and Yoon, Yong Tae and Jin, Young Gyu},
+  title   = {Self-healing Radial Distribution Network Reconfiguration Based on Deep Reinforcement Learning},
+  journal = {Results in Engineering},
+  volume  = {22}, pages = {102026}, year = {2024},
+  doi     = {10.1016/j.rineng.2024.102026}
+}
+@article{ferreira2019,
+  author  = {Ferreira, Leonardo Rodrigues and Aoki, Alexandre Rasi and Lambert-Torres, Germano},
+  title   = {A Reinforcement Learning Approach to Solve Service Restoration and Load Management Simultaneously for Distribution Networks},
+  journal = {IEEE Access},
+  volume  = {7}, pages = {145978--145987}, year = {2019},
+  note    = {IEEE Xplore document 8862818. Corrects the thesis entry that mis-attributed this title to ``Sahu et al., IEEE Trans. Smart Grid''.}
+}

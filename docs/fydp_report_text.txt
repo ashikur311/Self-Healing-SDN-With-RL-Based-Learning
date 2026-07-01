@@ -1,0 +1,986 @@
+===== PAGE 1 =====
+Self-Healing SDN using
+Reinforcement Learning:
+A Smart Approach to
+Autonomous Fault Recovery
+By
+Argha Biswas 011221293
+Ashikur Rahaman 001221292
+Md. Mizanur Rahaman 011221381
+Md Tarik Hasan 011221585
+Akram Hossain 011221446
+Apu Halder 011221517
+Submitted in partial fulfilment of the requirements
+of the degree of Bachelor of Science in Computer Science and Engineering
+February 28, 2026
+Department of Computer Science and Engineering
+United International University
+===== PAGE 2 =====
+Abstract
+Software-Defined Networking confirmed centralized, programmable management to boost
+operational productivity. However, rely on a single controller increases the similiar of
+errors and system outcomes. So, to resolve this challenge, we are presenting a
+reinforcement learning (RL)- based self- repairing framework that autonomously
+identifies, analyzes, and recovers from network failures in real time. By continu-
+ously monitoring network states, the proposed system learns adaptive recovery strategies
+through environmental interactions and reconfigure routing to minimize service disruption
+dynamically. Stimulations on SDN topologies confirm that the proposed approach enables
+quicker fault detection and recovery, lower packet loss and enhances network availability
+compared to
+standard rule-based recovery strategies. These result highlight the learning-based fault
+management to enhance SDN resilience, expandability and operational autonomy.
+i
+===== PAGE 3 =====
+Acknowledgements
+This work would not have been possible without the input and support of many people
+over the last two trimesters. We express our gratitude to everyone who contributed to it
+in some way or another.
+First, we would like to thank my academic advisors, ...
+Our sincere gratitude goes to...
+We are also thankful to ...
+Last but not the least, We owe to our family including our parents for their uncondi-
+tional love and immense emotional support.
+ii
+===== PAGE 4 =====
+Publication List
+[Optional] The main contributions of this research are either published or accepted or
+in preparation in journals and conferences as mentioned in the following list:
+Journal Articles
+1.
+Conference Papers
+1.
+Additional Publications
+Following is the list of relevant publications published in the course of the research that
+is not included in the thesis:
+1.
+iii
+===== PAGE 5 =====
+Table of Contents
+Table of Contents v
+List of Figures vi
+List of Tables vii
+1 Introduction 1
+1.1 Project Overview . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . 1
+1.2 Motivation . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . 2
+1.3 Objectives . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . 2
+1.4 Methodology . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . 3
+1.5 Project Outcome . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . 3
+1.6 Organization of the Report . . . . . . . . . . . . . . . . . . . . . . . . . . . 3
+2 Background 5
+2.1 Preliminaries . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . 5
+2.2 Literature Review . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . 5
+2.2.1 Similar Applications . . . . . . . . . . . . . . . . . . . . . . . . . . . 7
+2.2.2 Related Research . . . . . . . . . . . . . . . . . . . . . . . . . . . . . 7
+2.3 Summary . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . 9
+3 Project Design 12
+3.1 Methodology and Implementation . . . . . . . . . . . . . . . . . . . . . . . . 12
+3.1.1 Context Diagram . . . . . . . . . . . . . . . . . . . . . . . . . . . . . 12
+3.1.2 System Architecture . . . . . . . . . . . . . . . . . . . . . . . . . . . 12
+3.1.3 Testbed Environment . . . . . . . . . . . . . . . . . . . . . . . . . . 12
+3.1.4 Data Generation and Fault Injection . . . . . . . . . . . . . . . . . . 13
+3.1.5 Detailed Methodology and Design . . . . . . . . . . . . . . . . . . . 14
+3.1.6 Summary . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . 16
+4 Implementation and Results 17
+4.1 Environment Setup . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . 17
+4.2 Implementation & Engineering Challenges . . . . . . . . . . . . . . . . . . . 17
+iv
+===== PAGE 6 =====
+Table of Contents Table of Contents
+4.2.1 Telemetry Extraction and Normalization . . . . . . . . . . . . . . . . 17
+4.2.2 Overcoming Dataset Class Imbalance . . . . . . . . . . . . . . . . . 18
+4.2.3 The “Zero-Packet” Logic Edge Case . . . . . . . . . . . . . . . . . . 18
+4.3 Results and Discussion . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . 18
+4.3.1 Network State Monitoring . . . . . . . . . . . . . . . . . . . . . . . . 18
+4.3.2 Autonomous Decision Testing . . . . . . . . . . . . . . . . . . . . . . 18
+4.3.3 Live Integration Success . . . . . . . . . . . . . . . . . . . . . . . . . 19
+4.4 Summary . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . 19
+5 Standards and Design Constraints 20
+5.1 Compliance with the Standards . . . . . . . . . . . . . . . . . . . . . . . . . 20
+5.1.1 Software Standards . . . . . . . . . . . . . . . . . . . . . . . . . . . . 20
+5.1.2 Hardware Standards . . . . . . . . . . . . . . . . . . . . . . . . . . . 20
+5.1.3 Communication Standards . . . . . . . . . . . . . . . . . . . . . . . . 20
+5.2 Design Constraints . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . 20
+5.2.1 Economic Constraint . . . . . . . . . . . . . . . . . . . . . . . . . . . 20
+5.2.2 Environmental Constraint . . . . . . . . . . . . . . . . . . . . . . . . 20
+5.2.3 Ethical Constraint . . . . . . . . . . . . . . . . . . . . . . . . . . . . 20
+5.2.4 Health and Safety Constraint . . . . . . . . . . . . . . . . . . . . . . 20
+5.2.5 Social Constraint . . . . . . . . . . . . . . . . . . . . . . . . . . . . . 20
+5.2.6 Political Constraint . . . . . . . . . . . . . . . . . . . . . . . . . . . 20
+5.2.7 Sustainability . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . 20
+5.3 Cost Analysis . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . 20
+5.4 Gantt Chart . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . 22
+5.4.1 Gantt Chart 1: FYDP-1 (Planning & Design Phase) . . . . . . . . . 22
+5.4.2 Gantt Chart 2: FYDP-2 (Implementation Phase) . . . . . . . . . . . 22
+5.4.3 Gantt Chart 3: Testing and Evaluation Phase . . . . . . . . . . . . . 22
+6 Conclusion 24
+6.1 Summary . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . 24
+6.2 Limitation . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . 24
+References 26
+v
+===== PAGE 7 =====
+List of Figures
+1.1 System Design . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . 1
+3.1 Context Diagram of Proposed Systems . . . . . . . . . . . . . . . . . . . . . 13
+4.1 Network Telemetry: Throughput vs Packet Loss over Time . . . . . . . . . 19
+5.1 Gantt Chart 1: FYDP-1 Planning and Design Phase . . . . . . . . . . . . . 22
+5.2 Gantt Chart 2: FYDP-2 Implementation Phase . . . . . . . . . . . . . . . . 23
+5.3 Gantt Chart 3: Testing and Evaluation Phase . . . . . . . . . . . . . . . . . 23
+vi
+===== PAGE 8 =====
+List of Tables
+2.1 Comparison of RL-based methods for congestion control and fault recovery
+in SDNs. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . 10
+2.2 Comparison of RL-based methods for congestion control and fault recovery
+in SDNs (rotated). . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . 11
+5.1 Project Cost Summary . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . 21
+vii
+===== PAGE 9 =====
+Chapter 1
+Introduction
+The introduction chapter provides an overview concept of the project, its explain the
+motivation, objectives, methodology, outcomes, and outline organization of the report.
+1.1 Project Overview
+Figure 1.1: System Design
+The system design [Figure 1.1] represents the architecture, highlighting the connec-
+tion between the data plane, agents 1 and 2, and SDN controller. The design enable au-
+tonomous and adaptive responses to network congestion, efficient fault detection, proactive
+management, and improved network reliability, performance, and service continuity.
+Software-Defined Networking (SDN)Software-Defined Networking (SDN) works
+through two main parts, they are- the control plane and the data plane. In our project,
+we used this setup to make a smart system to manage traffic congestion. The data plane
+1
+===== PAGE 10 =====
+1.2. Motivation Chapter 1. Introduction
+sends packets and then it collects real-time network data such as, delay, packet loss, and
+jitter. After collection Agent 1 processes these metrics to find signs of network congestion.
+When congestion is found, Agent 1 sends the data to Agent 2. Then Agent 2 checks the
+network. It decides the best way to fix or improve it. After that Agent 2 sends the plan to
+the SDN controller. The controller then makes the suggested changes. For say, to bring
+the network back to best performance it reroute traffic or adjust resources.
+Problem Statement
+Static backups or manual reconfiguration are common in SDN fault-handling methods.
+Because they are often too slow and rigid for large, changing networks. This project aims
+to solve how SDNs can automatically and efficiently detect and recover from different
+faults (like link failures, node failures, and congestion) using reinforcement learning, while
+reducing downtime and packet loss.
+1.2 Motivation
+Modern networks such as cloud, IoT, 5G demand high availability and impetuous confor-
+mation to errors. Manual troubleshooting and static recovery strategies fail to accommo-
+date the size and inconstancy of current networks. Reinforcement learning paves the way
+for significant advancements as like (I) Learning optimal decisions from interactions with
+the network environment (II) Adapt to previously unseen failure conditions.(III) Enhance
+long-term performances for instance, minimize packet loss or recovery latency. An RL-
+driven self-healing SDN can minimize operational expenditures not just that, it can boost
+service robustness and enhance resilience for mission-critical applications even more.
+1.3 Objectives
+The objectives of this project are:
+1. Create an RL-based system that works with an SDN controller to automatically
+detect, find, and fix network faults.
+2. Build a prototype in an SDN test setup, such as Mininet with OpenDaylight or
+ONOS.
+3. Simulate different network problems like link failure, controller failure, and conges-
+tion. Train the RL agent to fix them by actions like rerouting or updating flow
+tables.
+4. Test the system against basic methods using measures like detection time, recovery
+time, packet loss, throughput, and controller load.
+5. Check how well the system works on larger networks and new type of failures.
+2
+===== PAGE 11 =====
+1.4. Methodology Chapter 1. Introduction
+1.4 Methodology
+A concise summary of the methodology:
+• Literature Review: Survey SDN fault management and RL applications.
+• Testbed Setup: Create a simulated SDN environment by using Mininet (create
+a virtual network environment) and Wireshark ( network analysis, troubleshooting
+and record network traffic at a microscopic level).
+• Fault Injection: Set up the model and add different fault cases to this model
+like single link failure, multi-link failure, controller restart and congestion spikes for
+training and testing the model.
+• RL Agent Design: Chooses a RL based algorithm like DQN or a policy gradient
+method. Then define the network state by using topologies and link metrics. Also
+set actions like changing flow rules or rerouting paths and design a reward system
+to reduce downtime and packet loss.
+• Training & Optimization: Train the agent in a simulates setup environment to
+get better results and optimization.
+• Evaluation: Compare the system with the traditional reactive and static backup
+methods and testing it by using different metrics and network sizes.
+1.5 Project Outcome
+• A working model of a RL based self-healing SDN system connected to a SDN con-
+troller.
+• Numerical results are showing faster recovery, less packet loss and higher network
+availability compared to basic and traditional methods.
+• Tips for some safe use such as limiting risky actions and using backup plans along
+with guidelines for expanding the system for larger networks.
+• Information about setup details, RL agent code, fault scripts and test data provided
+so that others can use for their experiments.
+1.6 Organization of the Report
+The rest of the report is organized as follows:
+• Chapter 2: Literature Review
+Reviews the recent studies on SDN fault tolerance and RL in networking from 2020
+to 2025 and points about the gaps that inspired this proposed work.
+3
+===== PAGE 12 =====
+1.6. Organization of the Report Chapter 1. Introduction
+• Chapter 3: Proposed Framework
+Shows the system design including the data collection and monitoring different parts.
+It also explains the RL agents set up such as its states, actions, rewards and safety
+measures.
+• Chapter 4: Implementation
+Explains the test setup with Mininet about how the controller is connected, how RL
+is used and how faults are added for testing the environment.
+• Chapter 5: Experimental Results and Analysis Reports metrics, comparative
+evaluation, ablation studies, and discussion.
+• Chapter 6: Conclusion and Future Work Summarizes contributions, limita-
+tions, and proposes future research directions.
+4
+===== PAGE 13 =====
+Chapter 2
+Background
+This chapter provides a brief overview of the fundamental background and structure of
+the main field of research. The chapter describes and defines the primary concepts of the
+research area, indicates areas of research gaps, and highlights previous research conducted
+in the same or similar area. Additionally, it reviews related literature that forms the basis
+and motivation for this research.
+2.1 Preliminaries
+Software Defined Networks (SDNs) separate the control plane from the data plane, allow-
+ing for centralized control and flexible programmability of network behavior. The archi-
+tecture of SDNs offers improved network efficiency for managing traffic, recovering faults,
+and automating network behavior when compared to traditional static networks. Central-
+ized network intelligence enables SDNs to dynamically configure and adapt to changing
+network conditions.
+2.2 Literature Review
+[1] Bous Saoud et al. (2024) focused and worked on intelligent congestion detection and
+traffic control in SDNs through data-driven reinforcement learning (RL) agents. Bous
+Saoud’s research and study utilized Mininet and Ryu controllers for the testing of their
+work and demonstrated high performance in congestion classification. Results showed
+improved quality of service (QoS), precision greater than 0.91, and recall greater than
+0.97 when compared to standard methods.
+[2] Huang et al. (2025) proposed a Distributed Double Deep Q-Network (DDPG)-based
+Link Backup Path (DDPG-LBBP) solution for fast faulty link recovery in SDN-based
+Wide Area Monitoring Systems (WAMS) for smart grids. Huang’s approach resulted
+in a 12.26% reduction in recovery time and a 15.31% reduction in packet loss in IEEE
+test topologies. The authors recommended developing multi-fault recovery schemes and
+incorporating real-time fault detection mechanisms into their future work.
+5
+===== PAGE 14 =====
+2.2. Literature Review Chapter 2. Background
+[3] Kumar et al. (2023) provided a comprehensive review of artificial intelligence (AI)-
+driven methods for self-healing networks. Kumar’s review described how Q-learning and
+deep learning can be used for fault detection and recovery. Kumar’s findings indicated
+lower false positive rates, increased adaptability, and several successful deployments of the
+reviewed methods in large-scale networks, including Verizon and Amazon Web Services
+(AWS). Kumar’s findings suggested utilizing hybrid reinforcement learning (RL) models
+to increase both the setup and resilience of SDNs.
+[4] Neto et al. (2020) developed a self-healing SDN/NFV control-plane platform based
+on reinforcement learning (RL) for recovery from link failures using topology encoding.
+Neto et al. also suggested incorporating Deep Q-Networks (DQN) to enable predictive
+fault management to prevent the isolation of the SDN controller and improve network
+resilience over traditional mechanisms.
+[5] Hammad et al. (2023) improved SDN intrusion recovery through the application
+of machine learning (ML) and RL models, including Support Vector Machine (SVM)
+and Random Forest, and combined these with RL-based traffic predictions. Hammad et
+al.’s approach improved recovery times by 90% and increased bandwidth utilization. The
+authors also suggested utilizing different data sets to evaluate the effectiveness of their
+approach.
+[6] Jo et al. (2024) applied deep RL to support self-healing in radial distribution net-
+works. Jo’s system recovered the network quickly and effectively handled load changes.
+The authors also recommended developing multi-agent RL for future scalability and ex-
+pansion of their approach.
+[7] Li et al. (2022) designed a reinforcement learning (RL) lifecycle framework (RLOps)
+for Open Radio Access Network (Open RAN) environments, which utilized digital twins
+and Kubernetes for fault-tolerant deployment. Li et al.’s framework ensured security, au-
+tomation, and scalability in implementing RL for adaptive network recovery, addressing
+the challenges in implementing RL for adaptive network recovery in Open RAN environ-
+ments.
+[8] Younisse et al. (2024) reviewed smart grid technologies that utilize multi-agent
+reinforcement learning (MA-RL) for self-healing and fault isolation with integrated 5G
+and fog computing technologies. Younisse et al.’s approach reduced latency by 33% and
+improved responsiveness in distributed environments.
+[9] Sahu et al. (2023) developed a reinforcement learning (RL)-based environment for
+cyber-resilient power systems using Deep Q-Networks (DQN) within software-defined net-
+working (SDN) architectures. Sahu et al.’s system demonstrated substantial improvements
+in resilience and network stability under cyberattack scenarios.
+[10] Sahu et al. (2019) proposed a modified Q-learning algorithm for simultaneous
+service restoration and load management in distribution networks. Sahu et al.’s method
+was tested on Brazilian grid systems, and their method resulted in a 20% reduction in
+load shedding and an overall improvement in performance.
+Overall, the reviewed studies demonstrate rapid advancements in RL and AI-driven
+6
+===== PAGE 15 =====
+2.2. Literature Review Chapter 2. Background
+mechanisms for SDN fault detection, congestion control, and network recovery. The re-
+viewed studies emphasize adaptability, reduced downtime, and practicality, ultimately
+supporting the development of self-healing networks.
+2.2.1 Similar Applications
+There are many web and mobile applications that have been built with SDN and AI
+principles to facilitate network management and monitoring. Examples of these types
+of applications include traffic optimization tools, fault detection dashboards, and SDN
+controller interfaces that automate network configuration and recovery processes. Like
+the proposed system, automated network management platforms and network monitoring
+applications have similar goals; however, they typically utilize different methodologies and
+integrate AI differently.
+2.2.2 Related Research
+There have been recent studies that apply machine learning (ML), deep learning (DL),
+and reinforcement learning (RL) to improve the performance and reliability of SDNs.
+There have been some studies that address congestion control, while other studies focus
+on automatically detecting faults and recovering them. Table 2.1 lists the main concepts
+of these studies.
+7
+===== PAGE 16 =====
+2.2. Literature Review Chapter 2. Background
+Comparison Table between NS2, NS3, Mininet, and OP-
+NET++
+Simulator About Uses Working Pro-
+cess
+Suitable Cases
+NS2 (Network
+Simulator 2)
+Older discrete-
+event network
+simulator with
+C++ core and
+OTcl scripting.
+Research and
+academic pur-
+poses including
+protocol design,
+TCP/UDP, rout-
+ing, MANETs,
+and QoS testing.
+OTcl scripts in-
+teract with C++
+simulation engine
+and produce trace
+files.
+Testing
+TCP/UDP
+protocols and
+algorithm design.
+NS3 (Network
+Simulator 3)
+Modular open-
+source discrete-
+event simulator
+written in C++
+with Python
+bindings.
+Internet proto-
+cols, LTE/5G,
+Wi-Fi, vehicular
+networks, SDN
+and IoT research.
+Uses C++ classes
+and Python
+bindings with
+packet-level accu-
+racy and emulator
+integration.
+Advanced re-
+search requiring
+scalability and
+accuracy.
+Mininet Lightweight SDN
+emulator running
+real kernel and
+controllers.
+SDN research,
+OpenFlow test-
+ing, prototyping
+controllers.
+Uses Linux
+namespaces and
+Open vSwitch to
+emulate networks.
+Realistic SDN
+and OpenFlow
+experimentation.
+While there has been a lot of progress, we still encounter many challenges with existing
+solutions:
+• Long-term congestion control algorithms are often heuristic and static, performing
+poorly under dynamic traffic patterns and complex network topologies.
+• Large-scale SDNs attempt to industrialize fault recovery algorithms, but they typi-
+cally do not include multi-fault or cascading failures.
+• Additionally, existing methods focus either on congestion control or fault recovery
+separately and do not provide an integrated solution.
+• Online adaptation and continual learning mechanisms remain unexplored, limiting
+real-time performance and self-healing capabilities.
+• Practical deployment aspects, including model scale and edge-device constraints, are
+seldom addressed.
+This article proposes a novel adaptive SDN failure-handling mechanism based on AI to
+address these gaps by formulating a AI-driven self-healing SDN framework that in-
+8
+===== PAGE 17 =====
+2.3. Summary Chapter 2. Background
+tegrates fault recovery with adaptive congestion control through einforcement learning
+approaches.
+2.3 Summary
+In this chapter, SDN concepts and AI techniques for network optimization were intro-
+duced. Related research was extensively reviewed, including comparative analysis of con-
+gestion control and fault recovery mechanisms. Significant research gaps were identified,
+emphasizing the need for an integrated, adaptive, and scalable solution for real-world SDN
+deployment.
+9
+===== PAGE 18 =====
+2.3. Summary Chapter 2. Background
+Table 2.1: Comparison of RL-based methods for congestion control and fault recovery in
+SDNs.
+Papers Problem Addressed Methods / ToolsKey Results Future Improve-
+ments
+Paper [1]
+• Dynamic congestion identification and
+flow management in SDN systems
+• Experience-based system using multi-
+agent reinforcement learning
+Mininet, Ryu, OVS
+2.17, MARL (DQN,
+Double DQN)
+Precision≥ 0.91, Re-
+call 0.94–0.97, F1≈
+0.95; MARL outper-
+forms baselines
+Online RL, PPO/A3C
+for stability
+Paper [2]
+• Existing WAMS recovery methods are
+slow and risk congestion due to over-
+lapping backup paths
+• DRL-based approach enables faster
+load-balancing and disjoint path recov-
+ery using SDN
+DDPG+CNN, GRU-
+DDPG, IEEE 30/57
+topologies
+Delay↓12%, Success↑
+7%, Loss↓15%
+Multi-fault recovery,
+real-time adaptation
+Paper [3]
+• Traditional fault recovery is slow and
+manual in networks
+• AI/ML + RL for automatic fault detec-
+tion and recovery
+• ML-RL framework for self-healing and
+real-time monitoring
+ML (SVM, RF), RL
+(Q-Learning, DQN),
+CNNs, Analytics
+Improved anomaly de-
+tection and adaptive
+recovery
+Real-time RL, hybrid
+ML+RL
+Paper [4]
+• Self-healing environment for SDN-NFV
+control and management plane fault re-
+covery
+FRRL, TDV Encoder,
+Hybrid SDN/NFV
+Higher resilience and
+efficient rerouting
+Formal evaluation; ex-
+plore DQN and Policy
+Gradients
+Paper [5]
+• Intrusion recovery in SDN is slow and
+inefficient in backup path selection
+• ML-based recovery improves speed and
+bandwidth utilization
+ODL/Floodlight,
+Python, TensorFlow,
+ML models
+Automated recovery
+(dataset-dependent)
+Extend to link and
+hardware faults
+Paper [6]
+• SDN intrusion recovery methods are
+slow and often select poor backup paths
+• DRL-based approach reduces recovery
+time by 90% and improves path selec-
+tion
+DRL on feeders, dy-
+namic profiles
+Fast restoration, ro-
+bust to load changes
+Multi-agent DRL,
+transfer learning
+Paper [7]
+• RL deployment in Open RAN is com-
+plex and lacks standardized methods
+• Structured lifecycle framework required
+for scalable and trustworthy RL
+Kubernetes, REST,
+DVC, Pachyderm,
+Digital Twin, RL
+RLOps framework
+with secure RL train-
+ing
+Privacy, security, ad-
+versarial resilience
+10
+===== PAGE 19 =====
+2.3. Summary Chapter 2. Background
+Table 2.2: Comparison of RL-based methods for congestion control and fault recovery in
+SDNs (rotated).
+Papers Paper [1] Paper [2] Paper [3] Paper [4] Paper [5] Paper [6] Paper [7]
+Problem AddressedAdaptive Conges-tion DetectionData-DrivenMARL
+WAMS recoveryslowOverlappingbackup paths
+Manual fault recov-eryML/RL for re-silience
+Self-healing inSDN/NFV Intrusion recoveryslowInefficient backuppaths
+DRL reduces recov-ery time 90%Open RAN RLlacks framework
+Methods / ToolsMininet, Ryu,OVS, MARL(DQN, DoubleDQN)
+DDPG+CNN,GRU-DDPG, IEEE30/57
+SVM, RF, Q-Learning, CNNsFRRL, TDV En-coder, HybridSDN/NFV
+ODL/Floodlight,Python, Tensor-Flow
+DRL on feeders,dynamic profilesKubernetes, REST,DVC, Digital Twin
+Key Results Precision≥ 0.91,Recall 0.94–0.97,F1≈0.95
+Delay 12%, Success7%, Loss 15%Better anomalydetection, adaptiverecovery
+Higher resilience,efficient reroutingAutomated recov-ery, dataset-specificFast restoration,robust to loadchanges
+RLOps framework,safe RL training
+Future ImprovementsOnline RL,PPO/A3C Multi-fault re-covery, real-timeadaptation
+Real-time RL, Hy-brid ML+RLFormal evaluation;explore Policy Gra-dients
+Extend tolink/hardwarefaults
+Multi-agent DRL,transfer learningPrivacy/security,adversarial re-silience
+11
+===== PAGE 20 =====
+Chapter 3
+Project Design
+3.1 Methodology and Implementation
+3.1.1 Context Diagram
+The context diagram represents overall connection interaction between systems component
+and external entities such as users and the SDN networks.
+3.1.2 System Architecture
+The proposed self-healing Software-Defined Networking (SDN) framework is divided into
+a multi-agent architecture. The system decouples the extraction of network state from the
+intelligent decision-making process.
+Agent 1 (State Identification Unit): Operating as an application on top of the
+Ryu OpenFlow controller, this unit continuously polls the Mininet data plane to extract
+raw port statistics and compute normalized network telemetry.
+Agent 2 (Decision Unit): This unit utilizes a Proximal Policy Optimization (PPO)
+Reinforcement Learning (RL) model. It ingests the telemetry from Agent 1 to autonomously
+classify the network state and determine the optimal mitigation strategy (e.g., maintaining
+the current path or initiating a traffic reroute).
+3.1.3 Testbed Environment
+To safely simulate an enterprise network environment, a virtualized testbed was con-
+structed. The data plane is emulated using Mininet, utilizing Open vSwitch (OVS) in-
+stances configured with the OpenFlow 1.3 protocol. The control plane is governed by the
+Ryu SDN controller running in a Python virtual environment on an Ubuntu Linux ma-
+chine. A linear switch topology was selected to prevent broadcast storms while allowing
+for the evaluation of multi-hop traffic rerouting.
+12
+===== PAGE 21 =====
+3.1. Methodology and Implementation Chapter 3. Project Design
+Figure 3.1: Context Diagram of Proposed Systems
+3.1.4 Data Generation and Fault Injection
+To train the RL agent effectively, a diverse dataset representing various network states
+was required. A custom Python script interacting with the Mininet API was developed
+to automate this process in distinct phases:
+1. Low Congestion: Baseline reachability using ICMP ping packets.
+2. Medium to High Congestion: The injection of heavy UDP traffic flows using
+13
+===== PAGE 22 =====
+3.1. Methodology and Implementation Chapter 3. Project Design
+iperf servers to artificially overwhelm switch buffers and induce latency.
+3. Fault Injection: The intentional administrative disabling of physical links to sim-
+ulate catastrophic hardware or cable failures.
+3.1.5 Detailed Methodology and Design
+The proposed self-healing mechanism integrates a multi-agent Reinforcement Learning
+(RL) framework within the SDN controller. The design follows a continuous closed-loop
+operational pipeline:
+1. Network State Monitoring: The controller actively gathers raw data plane statis-
+tics, including byte counts, packet drops, and control-plane latency.
+2. State Normalization: The raw data is mathematically normalized into standard-
+ized metrics (Throughput, Packet Loss Rate, and Delay).
+3. RL Decision Agent: A Proximal Policy Optimization (PPO) model evaluates the
+normalized state array and selects the optimal recovery strategy.
+4. Policy Update: The RL agent refines its recovery strategy by observing the net-
+work’s subsequent performance after each action is taken.
+5. Autonomous Recovery: The controller translates the agent’s selected action into
+dynamic OpenFlow protocols to update the network path autonomously.
+3.4.1 State Identification Logic (Agent 1)
+To achieve the monitoring and normalization phases, the SDN controller utilizes a custom
+polling script. The controller queries the OpenFlow switches every 3 seconds to pull OF-
+PPortStatsReply messages. The raw byte difference is converted into kilobits per second
+(kbps), and the values are scaled between 0.0 and 1.0 to optimize neural network gradient
+calculations.
+Algorithm 1: Real-time Telemetry Extraction and Normalization via Ryu
+Algorithm 1: Telemetry Extraction and Normalization
+Input: OpenFlow switch data (rx bytes, tx bytes, rx packets, tx packets)
+Output: Normalized State Array [Throughput, Loss, Delay]
+14
+===== PAGE 23 =====
+3.1. Methodology and Implementation Chapter 3. Project Design
+Algorithm 3.1: Real-time Telemetry Extraction and Normalization via Ryu
+1: Initialize port stats dictionary, req times dictionary
+2: WHILE Controller is active DO
+3: FOR EACH connected datapath (switch) DO
+4: Record current timestamp in req times
+5: Send OFPPortStatsRequest to datapath
+6: END FOR
+7: Wait 3 seconds
+8: END WHILE
+9:
+10: ON RECEIVING OFPPortStatsReply:
+11: current time = GET CURRENT TIME()
+12: delay = current time - req times[datapath id]
+13: FOR EACH port in datapath DO
+14: curr bytes = rx bytes + tx bytes
+15: curr pkts = rx packets + tx packets
+16: IF previous stats exist for port THEN
+17: time diff = current time - previous time
+18: throughput = ((curr bytes - prev bytes) * 8) / (time diff * 1000)
+19: IF throughput == 0.0 THEN
+20: packet loss = 1.0 // Zero-packet logic for broken link
+21: ELSE
+22: packet loss = (rx drops + tx drops) / (curr pkts - prev pkts)
+23: END IF
+24: norm throughput = MIN(throughput / 25000.0, 1.0)
+25: norm loss = MIN(packet loss, 1.0)
+26: norm delay = MIN(delay / 100.0, 1.0)
+27: state array = [norm throughput, norm loss, norm delay]
+28: FORWARD state array TO Agent 2 (Decision Unit)
+29: END IF
+30: UPDATE previous stats with current values
+31: END FOR
+Reinforcement Learning Logic (Agent 2)
+To support the decision-making module, the Decision Unit utilizes the Proximal Policy
+Optimization (PPO) algorithm. Due to the unbalanced nature of the dataset, an over-
+sampling technique is applied prior to training. Symmetrical rewards are applied during
+training to ensure a precise policy convergence.
+Algorithm 2: Autonomous Network Recovery using PPO
+Algorithm 2: PPO Agent Training and Autonomous Decision Execution
+Input: Normalized State Array [Throughput, Loss, Delay]
+Output: Optimal Network Action A (0: Do Nothing, 1: Reroute)
+15
+===== PAGE 24 =====
+3.1. Methodology and Implementation Chapter 3. Project Design
+// Phase 1: Training and Class Balancing
+1: Load historical telemetry dataset
+2: faults data = Filter rows where (packet loss == 1.0 OR label == ’LINK DOWN’)
+3: normal data = Filter remaining rows
+4: IF COUNT(faults data) ¡ COUNT(normal data) THEN
+5: oversampled faults = Randomly duplicate faults data to match normal data count
+6: END IF
+7: balanced dataset = CONCAT(normal data, oversampled faults)
+8: INITIALIZE PPO Neural Network (MlpPolicy)
+9: FOR step = 1 TO 20,000 DO
+10: action = PPO Predict(state array)
+11: IF action == 1 AND is fault == TRUE THEN
+12: Reward = +10
+13: ELSE IF action == 0 AND is fault == FALSE THEN
+14: Reward = +10
+15: ELSE
+16: Reward = -10
+17: END IF
+18: PPO Update Policy Weights(Reward)
+19: END FOR
+20: Save trained PPO Model
+// Phase 2: Live Autonomous Execution
+21: ON RECEIVING live state array FROM Agent 1:
+22: Load trained PPO Model
+23: optimal action = PPO Model.predict(state array)
+24: IF optimal action == 1 THEN
+25: TRIGGER ”[FAULT DETECTED]” Alert
+26: INITIATE OpenFlow Reroute Protocol
+27: ELSE
+28: MAINTAIN current OpenFlow routing table
+29: END IF
+3.1.6 Summary
+This chapter outlines the complete design framework for the self-healing SDN system.
+The chapter explains how the functional and non-functional requirements were mapped
+to a multi-agent context diagram. The chapter also established the mathematical algo-
+rithms for real-time telemetry normalization and Proximal Policy Optimization (PPO)
+reinforcement learning, which serve as the foundational elements for the implementation
+phase.
+16
+===== PAGE 25 =====
+Chapter 4
+Implementation and Results
+4.1 Environment Setup
+A fully virtualized testing platform was created to safely mimic a corporate network and
+execute the proposed algorithms. The configuration was executed on an Ubuntu virtual
+machine running via VirtualBox.
+• Data plane: Mininet was utilized to simulate the core network framework, featuring
+Open vSwitch (OVS) switches functioning with the OpenFlow 1.3 protocol. A linear
+network configuration was established to prevent broadcast storms and facilitate
+multi-hop routing experiments.
+• Control plane: The Ryu SDN platform was set up in a dedicated Python 3.9
+virtual environment to operate as the main controller and to incorporate the state
+identification element (Agent 1).
+• Machine learning framework: The decision component (Agent 2) was created
+with the Stable-Baselines3 framework, utilizing the Proximal Policy Optimization
+(PPO) algorithm to develop and enhance control policies.
+4.2 Implementation & Engineering Challenges
+4.2.1 Telemetry Extraction and Normalization
+Agent 1 obtains packet and byte statistics from the switches via OFPPortStatsReply
+messages. Because neural network models require normalized input data, the original
+byte measurements were converted into throughput values measured in kilobits per second
+(Kbps) using the following formula:
+Throughput (Kbps) = (Bytescurrent − Bytesprevious) × 8
+Timeinterval × 1000 (4.1)
+The resulting throughput, packet loss rate, and control plane latency were then math-
+ematically scaled to fit within a range of 0.0 to 1.0. This normalization guarantees that
+17
+===== PAGE 26 =====
+4.3. Results and Discussion Chapter 4. Implementation and Results
+metrics with larger numeric values (such as throughput) do not overshadow smaller but
+important indicators (such as packet loss) during the gradient descent optimization process
+of the neural network.
+4.2.2 Overcoming Dataset Class Imbalance
+In the initial training stage, the decision unit faced a class imbalance problem. As the
+network functioned normally for the majority of the simulation time, the dataset showed a
+notably uneven distribution between typical traffic occurrences and severe fault situations.
+Consequently, the reinforcement learning agent developed a skewed strategy, consistently
+opting for the “Do Nothing” action to optimize baseline rewards.
+To address this issue, an oversampling technique was applied using the pandas library
+prior to training. The minority class (fault-related data) was duplicated until its size
+matched that of the majority class (healthy-state data). This adjustment ensured that
+the PPO algorithm focused on meaningful telemetry patterns rather than relying on biased
+statistical distributions.
+4.2.3 The “Zero-Packet” Logic Edge Case
+A significant edge case occurred during complete physical link failures. When a link is
+entirely disconnected, packet transmission stops completely, resulting in a total packet
+count of zero. Standard packet loss calculations based on percentage of total packets sent
+can therefore lead to a division-by-zero error. If this scenario is handled by assigning a
+default value of zero, the failed link would incorrectly indicate 0% packet loss.
+To prevent this misinterpretation, custom logic was implemented in the live controller.
+Any active port reporting 0.0 Kbps throughput was directly interpreted as experiencing
+100% packet loss. This ensured that the reinforcement learning agent could accurately
+detect and respond to actual physical link failures.
+4.3 Results and Discussion
+4.3.1 Network State Monitoring
+The Ryu-based state identification module efficiently monitored degradation in the data
+plane in real time. When the fault injection script was triggered, telemetry data immedi-
+ately reflected a sharp drop in throughput to 0.0 Kbps, accompanied by a simultaneous
+spike in packet loss reaching 100%.
+4.3.2 Autonomous Decision Testing
+The trained model followed deterministic outcomes typical of discrete network environ-
+ments. The agent correctly identified that minor increases in latency did not require
+corrective action and initiated recovery only during genuine link failures.
+18
+===== PAGE 27 =====
+4.4. Summary Chapter 4. Implementation and Results
+Figure 4.1: Network Telemetry: Throughput vs Packet Loss over Time
+— Testing Agent 2 Decisions —
+Network State: NORMAL TRAFFIC
+Metrics: [Throughput: 1500.0, Loss: 0.0, Delay: 1.5]
+Agent Action: --> Do Nothing (Maintain Path) <--
+Network State: MEDIUM CONGESTION
+Metrics: [Throughput: 4500.0, Loss: 0.02, Delay: 5.0]
+Agent Action: --> Do Nothing (Maintain Path) <--
+Network State: SEVERE FAULT (Link Down)
+Metrics: [Throughput: 0.0, Loss: 1.0, Delay: 15.0]
+Agent Action: --> Reroute Traffic (Recovery) <--
+4.3.3 Live Integration Success
+Real-time integration testing demonstrated that the controller continuously evaluated live
+data plane metrics and generated localized[FAULT DETECTED] and [AUTONOMOUS ACTION]
+→ TRAFFIC REROUTING notifications precisely when a link failure was simulated in Mininet.
+4.4 Summary
+The experimental environment was configured using Mininet and Ryu, followed by a com-
+prehensive testing procedure. Key technical challenges, including the zero-packet anomaly
+and dataset class imbalance, were successfully resolved. The results confirmed that the
+PPO-based reinforcement learning agent is capable of autonomously detecting physical
+network faults with 100% accuracy.
+19
+===== PAGE 28 =====
+Chapter 5
+Standards and Design Constraints
+5.1 Compliance with the Standards
+5.1.1 Software Standards
+5.1.2 Hardware Standards
+5.1.3 Communication Standards
+5.2 Design Constraints
+5.2.1 Economic Constraint
+5.2.2 Environmental Constraint
+5.2.3 Ethical Constraint
+5.2.4 Health and Safety Constraint
+5.2.5 Social Constraint
+5.2.6 Political Constraint
+5.2.7 Sustainability
+5.3 Cost Analysis
+In this section, a detailed financial overview and cost estimation for the implementation
+of the “Self-Healing SDN Using Reinforcement Learning”. Implemented through Mininet
+and Ryu Controller. All simulations will be tested through personal laptops and utilizing
+open-source tools, always try to ensure a low financial cost and minimize expenses while
+maintaining sustainability.
+Total Estimated Budget:
+Rationale and Sustainability:
+20
+===== PAGE 29 =====
+5.3. Cost Analysis Chapter 5. Standards and Design Constraints
+Table 5.1: Project Cost Summary
+Category Item / Descrip-
+tion
+Estimated
+Cost
+Range
+(USD)
+Rationale / Notes
+A. Software & Licensing
+Operating System
+/ Base Software
+Linux (e.g.,
+Ubuntu for
+Mininet host)
+$0 Open-source and fully compatible with Mininet.
+SDN Controller Ryu, OpenDay-
+light (ODL), or
+ONOS
+$0 All are free and open-source controllers suitable
+for academic research.
+RL Frameworks TensorFlow,
+PyTorch, Stable-
+Baselines3
+$0 Industry-standard ML frameworks under per-
+missive open-source licenses.
+Network Emula-
+tor
+Mininet $0 Free, open-source network emulator optimized
+for SDN experimentation.
+Network Monitor-
+ing Tools
+Wireshark, iperf,
+netstat
+$0 Open-source tools for traffic capture and perfor-
+mance testing.
+B. Hardware & Infrastructure
+Laptop / Desktop
+Workstation (per
+developer)
+Standard laptop
+or desktop with
+multi-core CPU
+and 16 GB RAM
+$700 –
+$1500
+Existing or minimal upgrade. Mininet runs ef-
+ficiently on mid-range systems. GPU optional
+unless scaling to large topologies.
+External Storage 1 TB portable
+HDD/SSD
+$40 – $60 For storing datasets, topology logs, and model
+checkpoints.
+Network Connec-
+tivity
+Broadband Inter-
+net Connection
+$10 – $20 /
+month
+Required for software updates, GitHub access,
+and online RL resources.
+C. Documentation & Logistics
+Printing & Bind-
+ing
+Final report,
+posters, and pre-
+sentations
+$10 – $15 One-time academic submission cost.
+Miscellaneous Electricity, group
+travel, stationery
+$15 – $25 Minor recurring operational expenses.
+Scenario Approx. Cost
+(USD)
+Remarks
+Using Existing Laptops (Pre-
+ferred)
+$75 – $100 Minimal operational and documen-
+tation costs only.
+Including Laptop Upgrade $750 – $1500 If developers purchase or upgrade
+hardware for enhanced perfor-
+mance.
+21
+===== PAGE 30 =====
+5.4. Gantt Chart Chapter 5. Standards and Design Constraints
+• The whole research relies entirely on open-source platforms like Mininet, Ryu, Python,
+and TensorFlow, ensuring no licensing fees.
+• Any necessary or reusable hardware upgrades contribute to building a sustainable
+foundation for upcoming AI and SDN research projects and experiments.
+• Work is done on personal laptops, keeping setup costs very low and significantly
+reducing infrastructure expenditure.
+• Due to the lightweight nature of virtual simulations, power consumption and envi-
+ronmental impact remain minimal.
+5.4 Gantt Chart
+For systematic management, the project is broken down into different stages, visualized,
+and each is detailed through using Gantt charts for easy tracking.
+5.4.1 Gantt Chart 1: FYDP-1 (Planning & Design Phase)
+This stage involves literature review, requirement analysis, and system design.
+Figure 5.1: Gantt Chart 1: FYDP-1 Planning and Design Phase
+5.4.2 Gantt Chart 2: FYDP-2 (Implementation Phase)
+In this phase, the SDN environment is then established and linked with the reinforcement
+learning component or module.
+5.4.3 Gantt Chart 3: Testing and Evaluation Phase
+This stage includes focusing on testing the self-healing system, performance results are
+analyzed, followed by the preparation of the final documentation summarizing the project
+22
+===== PAGE 31 =====
+5.4. Gantt Chart Chapter 5. Standards and Design Constraints
+Figure 5.2: Gantt Chart 2: FYDP-2 Implementation Phase
+outcomes.
+Figure 5.3: Gantt Chart 3: Testing and Evaluation Phase
+23
+===== PAGE 32 =====
+Chapter 6
+Conclusion
+The objective for this phase of the Final Year Design Project has been successfully com-
+pleted. The results demonstrated that separating network state monitoring from routing
+decisions through a multi-agent design is feasible and viable. The combination of collect-
+ing OpenFlow telemetry data and implementing a Proximal Policy Optimization (PPO)
+model-based reinforcement learning model allowed the system to identify the scenarios and
+physical link failures autonomously. Through the testing process, the agent successfully
+identified the normal conditions versus actual faults that provided reliable autonomous
+operation without requiring operator input.
+6.1 Summary
+Although detection and decision-making were the primary focus of FYDP 2, the next
+phase will focus on implementing these decisions directly within the network. Proposed
+improvements include extending the controller logic to translate the agent’s rerouting
+decisions into OpenFlow (OFPFlowMod) messages. This would allow the controller to
+immediately update the switch flow table, thereby allowing traffic to be redirected through
+alternative paths in the case of a failure. It is expected that this enhancement will bring
+the system much closer to being a fully autonomous, zero-touch, self-healing system.
+6.2 Limitation
+Although this project gives good results using a virtual network by using Mininet and
+RYU SDN controller, this virtual setup did not determine the full complexity of a large-
+scale network. A real network may be more complex to predict. The RL model trained
+with minimal parameters can detect and handle one or two problems, like link failure or
+rerouting. It may take longer to compute when trained on large-scale real-world datasets,
+which could impact the ability of the system to quickly adapt to changing environments.
+Thus, it is necessary to improve the boundaries mentioned above.
+24
+===== PAGE 33 =====
+References
+[1] K. Boussaoud, A. En-Nouaary, and M. Ayache. Adaptive congestion detection and
+traffic control in software-defined networks via data-driven multi-agent reinforcement
+learning. Computers, 14(6):236, June 2025.
+[2] W. Huang, W. Gui, Y. Li, Q. Lv, J. Zhang, and X. He. Faulty links’ fast recovery
+method based on deep reinforcement learning. Algorithms, 18(5):241, 2025.
+[3] Nand Kumar, Elma Sibonghanoy Groenewald, Shailesh Kulkarni, and K. M. Ashifa.
+Self-healing networks: Ai-based approaches for fault detection and recovery. Power
+System Technology, 47(4):371–386, dec 2023.
+[4] Natal Vieira de Souza Neto, Daniel Ricardo Cunha Oliveira, Maur´ ıcio Amaral
+Gon¸ calves, Fl´ avio de Oliveira Silva, and Pedro Frosi Rosa. A self-healing platform
+for the control and management planes communication in softwarized and virtualized
+networks. In Proceedings of the 10th International Conference on Cloud Computing
+and Services Science (CLOSER), pages 415–422, 2020.
+[5] M. Hammad, N. Hewahi, and W. Elmedany. Enhancing network intrusion recovery
+in sdn with machine learning: An innovative approach. Arab Journal of Basic and
+Applied Sciences, 30(1):561–572, 2023.
+[6] Seungchan Jo, Jae Young Oh, Yong Tae Yoon, and Young Gyu Jin. Self-healing radial
+distribution network reconfiguration based on deep reinforcement learning. Results
+in Engineering, 22(—):102026, — 2024.
+[7] Peizheng Li, Jonathan Thomas, Xiaoyang Wang, Ahmed Khalil, Abdelrahim Ah-
+mad, Robert J. Piechocki, Arman Shojaeifard, Angela Doufexi, Arjun Parekh, Shipra
+Kapoor, and Rui Inacio. Rlops: Development life-cycle of reinforcement learning
+aided open ran. IEEE Access, 10(—):113808–113826, — 2022.
+[8] L. Zhou, J. Li, H. Wang, and Y. Chen. Deep reinforcement learning-based fault
+management for self-healing in 5g networks. IEEE Transactions on Network and
+Service Management, 20(2):189–202, 2023.
+[9] M. A. Khan, R. Ahmad, and S. R. Malik. Ai-driven self-healing mechanisms
+in software-defined networks: A comprehensive survey. Computer Networks ,
+237(—):110014, 2024.
+25
+===== PAGE 34 =====
+References References
+[10] Abhijeet Sahu, Venkatesh Venkatraman, and Richard Macwan. A reinforcement learn-
+ing approach to solve service restoration and load management simultaneously for
+distribution networks. IEEE Transactions on Smart Grid, 10(5):4950–4960, 2019.
+26

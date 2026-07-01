@@ -1,0 +1,50 @@
+M1 (peer-review) — Networking baseline for the recovery MECHANISM
+=================================================================
+Reviewer M1 asked: the self-healing reroute has no networking baseline. The
+standard SDN alternative is OpenFlow 1.3 fast-failover GROUP tables (OFPGT_FF),
+which recover in the data plane with no controller round-trip.
+
+New artifact: controller/failover_agent.py (proactive OFPGT_FF group at s1 and s3;
+each watches its primary output port and switches to the direct backup bucket the
+instant that port goes down). Same triangle topology + fixed ports + static ARP as
+reroute_agent.py, so recovery time is directly comparable.
+
+Measured with topology/measure_recovery.py (20 ms probe resolution, 5 cycles for
+node fault / 3 for the link fault). Two fault types:
+  - node : whole s2 fails (both s1-s2 and s2-s3 down) -> locally observable at BOTH
+           s1 and s3.
+  - link : single mid-path link s2-s3 down -> observable only at s3, NOT at s1.
+
+VERIFIED RESULTS (2026-07-01)
+-----------------------------
+                                 | node fault (s2 down) | single mid-link (s2-s3) |
+OpenFlow fast-failover (OFPGT_FF)| 52 +/- 10 ms  (recovers) | NO RECOVERY: 2140 ms outage (full window; rx 42-44/150) |
+Controller reroute (event-driven)| 40 +/- 13 ms  (recovers) | 40 +/- 13 ms (recovers, per fix #5) |
+
+Interpretation (the honest story for the paper):
+1. For a LOCALLY-OBSERVABLE fault (s2 node failure), both mechanisms recover in
+   ~40-50 ms and are statistically indistinguishable at this resolution. On this
+   emulated testbed the Ryu controller is co-located (localhost, ~0 ms RTT), so
+   fast-failover's theoretical "no controller round-trip" advantage does not
+   materialize; the numbers overlap. We do NOT claim the controller is faster.
+2. For a NON-LOCALLY-OBSERVABLE fault (single mid-path link s2-s3), per-switch
+   fast-failover CANNOT recover: s1 never sees the s2-s3 failure, keeps forwarding
+   toward s2, and the forward path black-holes (2140 ms outage = the entire fault
+   window; the backup-path RTT probe got no reply). The telemetry-driven
+   controller, having a GLOBAL view, reroutes both endpoints and recovers in
+   ~40 ms.
+
+=> This is where the closed-loop controller earns its keep: it recovers faults
+   that data-plane fast-failover structurally cannot, at comparable speed for the
+   faults both can handle. Fast-failover remains the better choice when the fault
+   is always local and controller-reachability is a concern (its recovery needs no
+   controller at all).
+
+Caveats: single small emulated topology; co-located controller (real deployments
+have non-zero control-plane RTT, which would widen the gap in fast-failover's
+favor for local faults); BFD/liveness tuning not explored.
+
+Reproduce:
+  ryu-manager controller/failover_agent.py & sudo python3 topology/measure_recovery.py 5 2.0 node
+  ryu-manager controller/reroute_agent.py   & sudo python3 topology/measure_recovery.py 5 2.0 node
+  ryu-manager controller/failover_agent.py & sudo python3 topology/measure_recovery.py 3 2.0 link  # shows no recovery

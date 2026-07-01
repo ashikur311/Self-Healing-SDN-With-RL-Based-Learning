@@ -1,0 +1,12 @@
+==== METHOD COMPARISON (fix #3) — same splits/seeds as fix #2 ====
+5 seeds, stratified 70/30 split BEFORE oversampling.
+
+method                 accuracy       precision      recall         f1            
+--------------------------------------------------------------------------------
+Loss-threshold rule    0.695±0.024    1.000±0.000    0.630±0.030    0.773±0.023   
+Logistic Regression    0.960±0.012    1.000±0.000    0.952±0.015    0.975±0.008   
+k-NN (k=5)             1.000±0.000    1.000±0.000    1.000±0.000    1.000±0.000   
+PPO agent              0.940±0.012    1.000±0.000    0.927±0.015    0.962±0.008   
+
+Reading: if the simple baselines tie the PPO agent, the RL algorithm is
+NOT the contribution — the closed-loop self-healing system is. State this.

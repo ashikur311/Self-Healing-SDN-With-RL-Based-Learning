@@ -1,0 +1,42 @@
+Fix #5 — Real data-plane latency + quantitative recovery time
+=============================================================
+Reproduce:
+  # terminal A
+  /home/mininet/venvs/ryu-4.34-py39/bin/ryu-manager controller/reroute_agent.py
+  # terminal B (needs root)
+  sudo python3 topology/measure_recovery.py 5 2.0
+
+Setup: triangle topology (topology/measure_recovery.py) with TCLink injected
+delays so latency is a REAL data-plane quantity, not the controller request/reply
+RTT the paper previously mislabeled as "delay".
+  h1 -1ms- s1 -5ms- s2 -5ms- s3 -1ms- h3   PRIMARY (2 switch hops)
+  h1 -1ms- s1 ------5ms------ s3 -1ms- h3   BACKUP  (1 direct hop)
+Recovery time = transient outage after failing the s2-s3 primary link, measured
+as (tx - rx) * ping_interval over N fail/restore cycles (interval 20 ms).
+
+Controller: reroute_agent.py (event-driven, port-status detection).
+
+VERIFIED RESULTS (2026-07-01), 5 cycles:
+  recovery time (ms)  : 40 +/- 13   (20 ms ping resolution)
+  PRIMARY path RTT    : avg 31.11 ms   jitter (mdev) 3.48 ms
+  BACKUP  path RTT    : avg 18.07 ms   jitter (mdev) 1.40 ms
+  per-cycle outages   : 40, 40, 40, 20, 60 ms
+
+Cross-check (3-cycle run): recovery 40 +/- 16 ms; primary 30.55 ms; backup 22.71 ms.
+
+Interpretation for the paper:
+- These are genuine end-to-end host-to-host ping RTTs over links with known
+  injected propagation delays -- the correct "latency" metric. The primary RTT
+  (~31 ms) sits a few ms above the 24 ms nominal propagation because of per-switch
+  processing; the ~13 ms primary-vs-backup gap reflects the extra switch hop
+  through s2 that the backup path removes.
+- Event-driven recovery completes within ~40 ms (2 lost 20-ms-spaced probes),
+  i.e. essentially sub-frame; "no sustained packet loss" from Fix #1 is now
+  quantified as a bounded ~40 ms transient outage.
+- The measured jitter (1-3 ms) is small and stable, consistent with an
+  uncongested emulated data plane.
+
+Caveat kept honest: emulated links, single small topology; the injected delays are
+a controlled stand-in for real propagation, chosen so primary/backup differ by one
+hop. The point demonstrated is the metric correction (data-plane RTT, not control
+RTT) and a quantitative recovery bound, not absolute latency of a production WAN.

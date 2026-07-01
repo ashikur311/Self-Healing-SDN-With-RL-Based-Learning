@@ -1,0 +1,14 @@
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+.ipynb_checkpoints/
+
+# Experiment run artifacts (regenerated; keep verified docs/ + paper/figures)
+results/logs/
+*.log
+/tmp/
+
+# Editor / OS
+.DS_Store
+*.swp
