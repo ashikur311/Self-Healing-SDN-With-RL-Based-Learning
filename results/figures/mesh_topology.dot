@@ -1,0 +1,14 @@
+graph mesh {
+  rankdir=LR; node [shape=circle];
+  h1 [shape=box]; h2 [shape=box];
+  h1 -- s1 [label="1ms"];
+  h2 -- s6 [label="1ms"];
+  s1 -- s2 [label="5M/2ms"];
+  s2 -- s6 [label="5M/2ms"];
+  s1 -- s3 [label="10M/5ms"];
+  s3 -- s4 [label="10M/5ms"];
+  s4 -- s6 [label="10M/5ms"];
+  s1 -- s5 [label="20M/10ms"];
+  s5 -- s7 [label="20M/10ms"];
+  s7 -- s6 [label="20M/10ms"];
+}

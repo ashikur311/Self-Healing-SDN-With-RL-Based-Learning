@@ -30,7 +30,7 @@ result. Run `/peer-reviewer` after each PHASE.
 **Reuse, don't rewrite:** `reroute_agent.py` (actuation), `measure_recovery.py`
 (harness), `evaluate_agent.py` (eval protocol) already work — wrap them.
 
-- [ ] **S0.1 — Environment + disk check.**
+- [x] **S0.1 — Environment + disk check.** DONE 2026-07-01: disk grown to 20G (13G free); all tools present (Ryu 4.34, OVS 2.13.8, Mininet sys-py3.8, SB3 2.7.1 venv-py3.9). See `docs/env.txt`.
   - Build: confirm tools; **free disk (VM is 100% full)**.
   - Test: `df -h /` shows free space; `ryu-manager --version`, `ovs-vsctl --version`,
     `python -c "import stable_baselines3, mininet"` all succeed.
@@ -63,7 +63,10 @@ result. Run `/peer-reviewer` after each PHASE.
 # PHASE 1 — M-A: big topology + live traffic + fault injection + DETECT   [~2–3 sessions]
 *Proves: "big topology → live packet → fault injection → it detects the problem."*
 
-- [ ] **S1.1 — Big topology.**
+- [x] **S1.1 — Big topology.** DONE 2026-07-01: `topologies/mesh.py` — 7 OVS switches,
+    3 node-disjoint paths (A/B/C, deliberately different bw/delay), TCLinks, fixed
+    MACs + static ARP. Self-test: pingall 0% drop, 3 disjoint paths confirmed.
+    See `results/logs/s1_1_mesh_selftest.txt`, `results/figures/mesh_topology.dot`.
   - Build: `topologies/mesh.py` — 6–8 OVS switches, **≥3 disjoint paths** between the
     test hosts, `TCLink` delays/bandwidth, fixed MACs + static ARP (loop-safe).
   - Test: `pingall` = 0% drop; `ovs-ofctl` shows expected ports.
