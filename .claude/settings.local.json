@@ -57,7 +57,11 @@
       "Bash(git init *)",
       "Bash(git config *)",
       "Bash(git add *)",
-      "Bash(git commit -q -m 'Initial commit: snapshot before professional restructure *)"
+      "Bash(git commit -q -m 'Initial commit: snapshot before professional restructure *)",
+      "Bash(git rm *)",
+      "Bash(git mv *)",
+      "Bash(/home/mininet/venvs/ryu-4.34-py39/bin/python -m py_compile controller/reroute_agent.py controller/self_healing_agent.py controller/failover_agent.py topology/reroute_topo.py topology/measure_recovery.py train_agent.py evaluate_agent.py compare_methods.py)",
+      "Bash(git commit -q -m 'Professional restructure: archive legacy, add README + .gitignore *)"
     ]
   }
 }
