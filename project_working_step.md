@@ -85,7 +85,11 @@ result. Run `/peer-reviewer` after each PHASE.
   - Test: prints per-port `[throughput,loss,latency]` and a correct adjacency graph.
   - PASS: graph matches the topology; telemetry non-zero under traffic.
 
-- [ ] **S1.3 — Fault injector.**
+- [x] **S1.3 — Fault injector.** DONE 2026-07-01: `topologies/faultgen.py`
+    (`FaultInjector` + `FaultLog` + YAML scheduler) — link_down/up, multi_link,
+    switch_down/up (node isolation), congestion (soft UDP flood), flap. Self-test:
+    all 7 types injected + logged with timestamps; link_down verified to down the
+    interface. Schedule `configs/faults_demo.yaml`. See `results/logs/s1_3_faultgen_results.txt`.
   - Build: `topologies/faultgen.py` — scheduled faults: single-link, node (switch),
     congestion (UDP flood), multi-link, and flapping (up/down cycles).
   - Test: each fault type is injected + logged with a timestamp.

@@ -1,0 +1,12 @@
+# SHIELD demo fault schedule (S1.3). t = seconds after schedule start.
+# label = ground truth used later to train/evaluate the detector (S1.6/S1.7).
+name: demo
+seed: 42
+events:
+  - {t: 2,  type: link_down,   target: [s1, s2], label: "fault:link:s1-s2"}
+  - {t: 5,  type: link_up,     target: [s1, s2]}
+  - {t: 7,  type: multi_link,  target: [[s3, s4], [s5, s7]], label: "fault:multi:B+C"}
+  - {t: 10, type: switch_down, target: s4, label: "fault:node:s4"}
+  - {t: 13, type: switch_up,   target: s4}
+  - {t: 15, type: congestion,  target: [h1, h2], rate: "30M", dur: 6, label: "congestion:h1-h2"}
+  - {t: 18, type: flap,        target: [s1, s3], cycles: 3, period: 2, label: "fault:flap:s1-s3"}
