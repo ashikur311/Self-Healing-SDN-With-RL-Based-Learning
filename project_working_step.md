@@ -73,7 +73,12 @@ result. Run `/peer-reviewer` after each PHASE.
   - PASS: full connectivity, ≥3 usable paths confirmed.
   - Output: `topologies/mesh.py` + a topology diagram in `results/figures/`.
 
-- [ ] **S1.2 — Telemetry + live graph.**
+- [x] **S1.2 — Telemetry + live graph.** DONE 2026-07-01: `collector.py`
+    (`TelemetryCollector` normalized [tput,loss,delay] + `TelemetryMonitor` app) and
+    `topology_graph.py` (`TopologyGraph`, live `active_graph()` from static spec +
+    port-status). Live test (mesh+STP+iperf): graph matches spec (7 switches, all
+    ports), telemetry non-zero on active Path A. See `results/logs/s1_2_telemetry_results.txt`.
+    Refactor: pure `topologies/mesh_spec.py` (Mininet-free) shared by builder + control plane.
   - Build: `framework/telemetry/collector.py` (port-stats poll + normalization,
     reused from the controllers); `framework/telemetry/topology_graph.py` (live
     switch/link graph, updated from LLDP or a static map + port-status).
