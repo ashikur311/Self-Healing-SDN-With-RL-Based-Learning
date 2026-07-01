@@ -1,0 +1,5 @@
+# SHIELD default traffic profile (S1.4).
+name: default
+seed: 42
+dur: 30        # seconds of traffic
+n_bursts: 6    # randomized foreground bursts (mixed TCP/UDP, varying rate)

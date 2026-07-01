@@ -95,7 +95,11 @@ result. Run `/peer-reviewer` after each PHASE.
   - Test: each fault type is injected + logged with a timestamp.
   - Output: reproducible fault schedules (in `configs/`).
 
-- [ ] **S1.4 — Live traffic.**
+- [x] **S1.4 — Live traffic.** DONE 2026-07-01: `topologies/traffic.py`
+    (`TrafficGenerator`: 2 persistent background flows + N randomized foreground
+    bursts, non-blocking so faults inject concurrently). Self-test: 8 flows, TCP+UDP,
+    4 rates (1/2/4/6M, some > Path-A 5M => congestion loss), 32MB moved.
+    Profile `configs/traffic_default.yaml`. See `results/logs/s1_4_traffic_results.txt`.
   - Build: `topologies/traffic.py` — mixed TCP + UDP, background + foreground,
     varying rates, so **congestion ≠ fault** (not trivially separable).
   - Test: `iperf` flows run; telemetry shows realistic load.
