@@ -104,7 +104,13 @@ result. Run `/peer-reviewer` after each PHASE.
     varying rates, so **congestion ≠ fault** (not trivially separable).
   - Test: `iperf` flows run; telemetry shows realistic load.
 
-- [ ] **S1.5 — Data collection at scale.**
+- [x] **S1.5 — Data collection at scale.** DONE 2026-07-01: `experiments/collect_dataset.py`
+    (single-process: builder + traffic + fault event-loop + `ovs-ofctl dump-ports`
+    polling via `TelemetryCollector`; per-port `is_fault` + `scenario` labels).
+    Added `topologies/mesh2_spec.py` (2nd topology, M4) + `topologies/builder.py`.
+    Dataset `data/datasets/telemetry_v2.csv`: **1802 rows, 2 topologies**, all 5
+    scenarios (normal 88.3%, congestion 5.7%, link/node/flap = 6% is_fault). Faults→
+    tput≈0, congestion→tput spike w/ is_fault=0. Report `docs/p1_dataset_report.txt`.
   - Build: run S1.1–S1.4 together; log telemetry + ground-truth labels
     (fault/normal + which element) to a growing dataset.
   - Test: dataset has **≥1–2k rows across ≥2 topologies**, multiple fault types.
