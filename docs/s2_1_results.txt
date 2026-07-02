@@ -1,0 +1,29 @@
+S2.1 — Candidate path generation (Yen's k-shortest-paths)          PASS
+================================================================================
+Build:  framework/pathing/k_paths.py
+        - dijkstra(graph, src, dst, weight, banned_nodes, banned_edges)  heap SP
+        - k_shortest_paths(graph, src, dst, k, weight)                   Yen's loop
+        - path_cost / path_metrics (hops, sum-delay, bottleneck-bw)
+        - candidate_paths(topo_graph, ..., failed_node=, failed_edge=)   live wrapper
+        Operates on the active_graph() adjacency shape
+        { sX: { sY: {'lport','rport','bw','delay'} } } (switch-name keyed, symmetric),
+        so it is testable offline with no Mininet/controller. Edge cost pluggable
+        (default by_delay = latency; by_hops available). The failed element is
+        excluded either by the caller via active_graph(exclude_*) or directly via
+        candidate_paths(failed_node/failed_edge).
+
+Test:   tests/test_k_paths.py  ->  "S2.1 PASS"
+  [1] Hand-drawn graph, distinct costs: k=3 returns exactly
+        A-B-C-D(3), A-C-D(5), A-B-D(6) in ascending cost order; k=99 returns all 4
+        (4th = A-C-B-D=10). Deterministic order verified.
+  [2] Real mesh spec, s1->s6, k=3: the 3 intended node-disjoint paths, delay-ordered
+        A [s1,s2,s6] d=4 bw=5 | B [s1,s3,s4,s6] d=15 bw=10 | C [s1,s5,s7,s6] d=30 bw=20.
+  [3] Exclusion: failed_node='s2' -> only B,C (s2 absent from every path);
+        failed_edge=('s1','s3') -> only A,C (edge absent from every path).
+  [4] Unreachable dst -> []; src==dst -> [src]; degenerate handled.
+
+PASS gate (from project_working_step.md): "correct k paths; excludes the failed
+link/node."  MET — all four checks green.
+
+Next: S2.2 — framework/agents/resolver.py (score candidates on
+w1(-latency)+w2(capacity)+w3(-loss)+w4(-hops), pick best, hand ports to actuation).

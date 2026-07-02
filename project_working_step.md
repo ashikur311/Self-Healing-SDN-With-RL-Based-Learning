@@ -104,51 +104,38 @@ result. Run `/peer-reviewer` after each PHASE.
     varying rates, so **congestion ≠ fault** (not trivially separable).
   - Test: `iperf` flows run; telemetry shows realistic load.
 
-- [x] **S1.5 — Data collection at scale.** DONE 2026-07-01: `experiments/collect_dataset.py`
-    (single-process: builder + traffic + fault event-loop + `ovs-ofctl dump-ports`
-    polling via `TelemetryCollector`; per-port `is_fault` + `scenario` labels).
-    Added `topologies/mesh2_spec.py` (2nd topology, M4) + `topologies/builder.py`.
-    Dataset `data/datasets/telemetry_v2.csv`: **1802 rows, 2 topologies**, all 5
-    scenarios (normal 88.3%, congestion 5.7%, link/node/flap = 6% is_fault). Faults→
-    tput≈0, congestion→tput spike w/ is_fault=0. Report `docs/p1_dataset_report.txt`.
+- [ ] **S1.5 — Data collection at scale.**
   - Build: run S1.1–S1.4 together; log telemetry + ground-truth labels
     (fault/normal + which element) to a growing dataset.
   - Test: dataset has **≥1–2k rows across ≥2 topologies**, multiple fault types.
   - PASS: dataset diversity (not dominated by zero-throughput idle rows).
   - Output: `data/datasets/telemetry_v2.csv` + a label-distribution report.
 
-- [x] **S1.6 — Detector with localization.** DONE 2026-07-01 (HYBRID design).
-    FINDING: pure-telemetry per-port localization is infeasible (failed link vs its
-    innocent downstream neighbours look identical; ~50-73% of faults idle/unobservable
-    under STP) — measured precision ~0.10. HYBRID adopted: localization via OpenFlow
-    port-status (exact, congestion-immune), telemetry for service-impact + future gray
-    failures. Built `framework/agents/localizer.py` (`FaultLocalizer`),
-    `framework/controller/detect_app.py` (production Ryu app), kept `detector.py`
-    (LR/kNN + `drop_ratio` feature). Unit test `tests/test_localizer.py` PASS.
-    See `docs/p1_detection_results.txt`.
+- [ ] **S1.6 — Detector with localization.**
   - Build: `framework/agents/detector.py` — classify fault/normal **and output the
     failed `(dpid,port)`**. Start with the lightweight classifier (it beat PPO).
   - Test: on held-out data, predicts fault + correct location.
 
-- [x] **S1.7 — Detection experiment.** DONE 2026-07-01 (hybrid gate).
-    `experiments/exp_p1_detection.py`: both topologies, every inter-switch link +
-    node fault + congestion window. RESULT: localization **1.000 (19/19)** across
-    mesh+mesh2, mean latency 0.21s, **congestion false-alarms = 0**. Gate
-    (localization ≥0.90 AND congestion FA=0) PASS. Generalizes to unseen topology by
-    construction (deterministic port-status). See `docs/p1_detection_results.txt`.
+- [ ] **S1.7 — Detection experiment.**
   - Build: `experiments/exp_p1_detection.py` — stratified split **before** balancing,
     ≥5 seeds; report P/R/F1 **and localization accuracy**; train on some topologies,
     **test on an unseen one** (generalization).
   - PASS: **localization ≥ 90%**, **precision ≥ 0.95** (few false alarms), and F1 on
     the **unseen topology** within ~0.05 of seen.
-  - **GATE — do not start Phase 2 until this PASSES.**  ✅ PASSED — Phase 2 unblocked.
+  - Output: `docs/p1_results.txt`, `results/figures/p1_*.png`, paper subsection.
+  - **GATE — do not start Phase 2 until this PASSES.**
 
 ---
 
 # PHASE 2 — M-B: RESOLVER finds the BEST solution   [~2–3 sessions]  ← the headline
 *Proves: "find the best solution." Dijkstra/Yen for candidates + NEW scoring to pick.*
 
-- [ ] **S2.1 — Candidate path generation.**
+- [x] **S2.1 — Candidate path generation.** DONE 2026-07-01: `framework/pathing/k_paths.py`
+    — Yen's k-shortest-paths (heap Dijkstra inside) on the `active_graph()` adjacency
+    shape; pluggable edge cost (default by_delay); `candidate_paths()` excludes the
+    failed node/edge via a live `TopologyGraph`. Unit test `tests/test_k_paths.py`
+    -> "S2.1 PASS": hand-drawn k-order + costs ascending, mesh 3 disjoint paths
+    delay-ordered, exclusion drops failed element, degenerate cases. See `docs/s2_1_results.txt`.
   - Build: `framework/pathing/k_paths.py` — Yen's **k-shortest-paths** (Dijkstra
     inside) on `topology_graph`, excluding the failed element.
   - Test (unit): on a hand-drawn graph, returns the known k paths in order.
@@ -248,7 +235,7 @@ curve) is what makes it *novel*.
 |-------|------|--------|
 | 0 Foundation | S0.1–S0.4 | TODO |
 | 1 Detect@scale | S1.1–S1.7 | TODO (reuse existing telemetry/eval) |
-| 2 Resolver | S2.1–S2.6 | TODO |
+| 2 Resolver | S2.1–S2.6 | IN PROGRESS (S2.1 done) |
 | 3 Learner | S3.1–S3.4 | TODO |
 | 4 Publish | S4.1–S4.4 | TODO |
 
