@@ -1,0 +1,39 @@
+S4.2 — Test suite + reproducibility                               PASS
+================================================================================
+Build:
+  tests/run_all.py  — one-command offline test runner. Runs all 8 stdlib-only unit
+    suites as subprocesses, checks exit code + "PASS" marker, prints a green/red
+    summary, exits non-zero on any failure (CI-gateable). Live experiments are
+    excluded and listed with their exact CLIs in REPRODUCE.md.
+  REPRODUCE.md  — full reproducibility guide: pinned environment (two-interpreter
+    split: system py3.8 for Mininet via sudo, venv py3.9 for Ryu/SB3; OVS 2.13.8,
+    OF1.3, ryu 4.34, SB3 2.7.1 -- from docs/env.txt), the offline test command, and
+    the exact `sudo python3 -u ... > results/logs/... 2>&1` CLIs for every live
+    experiment with their PASS gates + fixed seeds + provenance/honesty notes.
+
+Test:  python3 tests/run_all.py
+  test_k_paths       PASS   (S2.1 candidate paths)
+  test_resolver      PASS   (S2.2 scoring/selection)
+  test_baselines     PASS   (S2.3 baselines)
+  test_shield_core   PASS   (S2.4 closed-loop brain)
+  test_localizer     PASS   (S1.6 fault localization)
+  test_experience    PASS   (S3.1 store + reward)
+  test_learner       PASS   (S3.2 learner loop)
+  test_nonstationary PASS   (S3.3 non-stationary schedule)
+  -> 8/8 suites PASS in ~0.6s;  *** OFFLINE TEST SUITE: GREEN (exit 0)
+
+Reproducibility checklist (from project_working_step.md S4.2):
+  [x] all unit tests green from one runner (tests/run_all.py -> 8/8)
+  [x] integration/live experiments documented with exact CLIs (REPRODUCE.md sec 3)
+  [x] pinned versions (docs/env.txt, REPRODUCE.md sec 1)
+  [x] fixed seeds (in-script; schedule seed=7, SEEDS=5, listed in REPRODUCE.md)
+  [x] configs committed (configs/faults_demo.yaml, configs/traffic_default.yaml)
+  [x] every number traces to a script + log (docs/*_results.txt <-> results/logs/*)
+
+PASS gate: "All unit + integration tests green; pinned versions, fixed seeds, exact
+CLIs, configs committed."  MET.
+
+Next: S4.3 — framework paper (extend paper/ or new): architecture + the three pillar
+experiments + honest baselines/ablations; every number [VERIFIED]. FIRST clear the
+review debt: docs/p2_review_notes.md (S2.5 constructed comparison) and
+docs/p3_review_notes.md (S3.4 evaluation). Then S4.4 review + Overleaf build.

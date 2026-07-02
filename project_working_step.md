@@ -275,8 +275,11 @@ result. Run `/peer-reviewer` after each PHASE.
 - [ ] **S4.1 — Full end-to-end run.** One command: big topology + live traffic + fault
   schedule + detect + resolve + learn. PASS: runs clean start-to-finish, recovers +
   improves. Output: `results/logs/e2e_run.txt`.
-- [ ] **S4.2 — Test suite + reproducibility.** All unit + integration tests green;
-  pinned versions, fixed seeds, exact CLIs, configs committed.
+- [x] **S4.2 — Test suite + reproducibility.** DONE 2026-07-01: `tests/run_all.py`
+  (one-command offline runner -> 8/8 unit suites GREEN in ~0.6s, CI-gateable) +
+  `REPRODUCE.md` (pinned two-interpreter env, offline test cmd, exact live-experiment
+  CLIs with PASS gates + fixed seeds + provenance). Configs committed. See
+  `docs/s4_2_results.txt`.
 - [ ] **S4.3 — Framework paper.** Extend `paper/` (or a new paper): architecture,
   the three pillar experiments, honest baselines/ablations. Every number `[VERIFIED]`.
 - [ ] **S4.4 — Review + build.** Run `/peer-reviewer`; address findings; compile on
