@@ -1,0 +1,365 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Self-Healing SDN using Reinforcement Learning — preview</title>
+<style>
+  :root { --ink:#111; --muted:#555; --line:#ccc; --accent:#1a4f8b; }
+  * { box-sizing: border-box; }
+  body { font-family: Georgia, "Times New Roman", serif; color: var(--ink);
+         max-width: 820px; margin: 24px auto; padding: 0 20px; line-height: 1.5;
+         font-size: 15px; }
+  h1 { font-size: 22px; text-align: center; margin: 0 0 4px; line-height: 1.3; }
+  .authors { text-align: center; color: var(--muted); font-size: 14px; margin: 6px 0; }
+  .advisor { text-align: center; color: var(--muted); font-size: 13px; font-style: italic; }
+  h2 { font-size: 17px; color: var(--accent); border-bottom: 1px solid var(--line);
+       padding-bottom: 3px; margin-top: 28px; }
+  h3 { font-size: 15px; margin-top: 18px; }
+  .abstract { background:#f6f8fa; border:1px solid #e2e6ea; padding:12px 16px;
+              border-radius:6px; font-size:14px; }
+  .kw { font-size: 13px; color: var(--muted); }
+  table { border-collapse: collapse; width: 100%; margin: 12px 0; font-size: 13px;
+          font-family: Arial, sans-serif; }
+  th, td { border: 1px solid var(--line); padding: 5px 8px; text-align: center; }
+  th { background: #eef2f6; }
+  td.l, th.l { text-align: left; }
+  caption { caption-side: bottom; font-size: 12px; color: var(--muted);
+            padding-top: 6px; text-align: left; }
+  figure { margin: 16px 0; text-align: center; }
+  figure img { max-width: 100%; border: 1px solid #eee; }
+  figcaption { font-size: 12px; color: var(--muted); margin-top: 6px; text-align: left; }
+  .eq { text-align: center; font-family: "Cambria Math", Georgia, serif;
+        font-style: italic; margin: 10px 0; font-size: 15px; }
+  .banner { background:#fff8e1; border:1px solid #ffe08a; padding:8px 12px;
+            border-radius:6px; font-size:13px; font-family:Arial,sans-serif; }
+  /* architecture diagram */
+  .arch { display:flex; flex-wrap:wrap; align-items:center; justify-content:center;
+          gap:6px; font-family:Arial,sans-serif; font-size:12px; margin:10px 0; }
+  .arch .box { border:1.5px solid var(--accent); border-radius:8px; padding:8px 10px;
+               min-width:96px; text-align:center; background:#f4f8fd; }
+  .arch .arr { color:var(--accent); font-weight:bold; }
+  .arch .fb { width:100%; text-align:center; color:var(--muted); font-size:11px; }
+  .verified { color:#2e7d32; font-size:11px; font-family:Arial,sans-serif; }
+  @media print {
+    body { margin: 0; max-width: 100%; font-size: 11.5px; }
+    h2 { margin-top: 18px; }
+    .noprint { display: none; }
+    figure, table { page-break-inside: avoid; }
+  }
+</style>
+</head>
+<body>
+
+<div class="banner noprint">
+  <b>Reading preview.</b> This is a browser-readable version for quick sharing —
+  <b>Print → Save as PDF</b> to export. The official IEEE-typeset PDF is built from
+  <code>final.tex</code> on Overleaf (see <code>docs/TEAM_GUIDE.md</code> §9).
+</div>
+
+<h1>Self-Healing SDN using Reinforcement Learning:<br>An Approach to Autonomous Fault Recovery</h1>
+<div class="authors">
+  Argha Biswas (011221293), Ashikur Rahaman (001221292), Md. Mizanur Rahaman (011221381),<br>
+  Md Tarik Hasan (011221585), Akram Hossain (011221446), and Apu Halder (011221517)<br>
+  Department of Computer Science and Engineering, United International University, Dhaka, Bangladesh
+</div>
+<div class="advisor">Advisor: Dr. Al-Sakib Khan Pathan, Professor, Dept. of CSE, United International University</div>
+
+<h2>Abstract</h2>
+<div class="abstract">
+Software-Defined Networking (SDN) separates control from forwarding and makes recovery
+programmable, yet operational fault handling still leans on static backup paths or manual
+reconfiguration that respond slowly to link failures. We present a self-healing SDN controller
+that runs a full recovery loop: it reads OpenFlow telemetry, decides when a fault has occurred,
+selects a healthy replacement path, and installs the corresponding flow rules
+(<code>OFPFlowMod</code>) so traffic keeps moving. The system is built on Mininet with Ryu and
+Open vSwitch, and we evaluate each stage under leakage-free protocols rather than a single
+favourable run. Fault detection reaches 0.94±0.01 accuracy and 0.96 F1 on held-out data, and
+after a primary-link failure connectivity returns with no sustained loss: within a 40±13 ms
+transient for event-driven detection, or bounded by the telemetry poll (3.4±0.6 s) when the
+decision is taken from periodic state. Beyond a single recovery, we harden the loop into a
+reusable framework and test three capabilities. First, localization: a hybrid of exact OpenFlow
+port-status and telemetry pinpoints every injected hard fault (19 of 19) across two topologies
+with no congestion false alarms. Second, path choice: a loss-aware objective (latency, capacity,
+loss, hops) beats loss-blind recovery in three of five live scenarios, matches a strong
+load-aware widest-path router on bandwidth faults, and outperforms it when loss and bandwidth
+disagree, while staying robust to noisy loss telemetry against a ground-truth oracle. Third,
+adaptation through reinforcement learning: on a drifting network where the decisive signal is not
+visible at decision time, the controller learns from the reward of each executed recovery and
+re-fits its path-selection policy online, which keeps recovery quality high while a frozen model
+collapses (p = 0.0039 over eight seeds) and tracks the drift as well as a purpose-built adaptive
+baseline. A clear boundary emerges for where learning belongs: a lightweight classifier handles
+the stateless detection trigger, while reinforcement learning from execution rewards drives the
+sequential recovery policy. We release the controllers, topologies, fault-injection harness, and
+evaluation scripts.
+</div>
+<p class="kw"><b>Keywords:</b> Software-Defined Networking, OpenFlow, self-healing, fault
+detection, fault localization, flow rerouting, path selection, reinforcement learning, online
+learning, Ryu, Mininet.</p>
+
+<h2>I. Introduction</h2>
+<p>High availability is a basic expectation for modern networks, but a centralized SDN control
+plane concentrates the consequences of link and path failures in one place. Static backup routes
+and manual reconfiguration are often too slow or too rigid for conditions that change during
+operation. The question we study is whether a controller can carry out the whole recovery process
+on its own: notice a fault, work out where it is, choose a good path around it, reprogram the
+switches, and improve its choices as the network changes.</p>
+<p>We build such a controller and evaluate it without the shortcuts that tend to inflate this kind
+of result. On a redundant emulated topology it detects link faults with 0.94 held-out accuracy and
+restores connectivity within a bounded transient of about 40 ms when detection is event-driven. We
+are careful about where learning belongs. Deciding that a fault has occurred is a stateless test,
+and a controlled comparison shows a lightweight classifier handles it as well as a learned agent,
+so we keep that stage simple. Recovering from the fault is different: the controller has to choose
+a path, act, observe the result, and do better next time as conditions drift, which is a sequential
+decision problem. We formulate that stage as reinforcement learning from execution rewards, and it
+is the part that adapts day by day. We then extend the loop from a single scripted recovery into a
+framework and test it on the harder problems that appear once more than one fault, one path, or one
+operating regime is in play.</p>
+<p><b>Contributions:</b> (1) a closed-loop self-healing controller that turns telemetry-based fault
+decisions into real OpenFlow flow modifications; (2) a leakage-free evaluation with a baseline
+comparison that shows where learning is and is not needed; (3) a recovery-mechanism baseline
+against OpenFlow fast-failover; (4) a hybrid fault-localization method; (5) a loss-aware resolver
+benchmarked against loss-blind recovery, a load-aware widest-path router, and a ground-truth
+oracle; (6) an online reinforcement-learning rule for that resolver, tested under drift with a
+paired permutation test over eight seeds; and (7) a single live run that composes all stages.</p>
+
+<h2>II. Related Work</h2>
+<p>Learning-based control has been studied across SDN congestion management and network fault
+recovery: multi-agent classifier + deep-Q for congestion, DDPG for faulty-link weight recomputation,
+ML classifiers for intrusion recovery, platform-level control-plane self-healing, RL life-cycles for
+Open RAN, and (deep) RL for power-grid restoration. Two gaps shape our work. First, most SDN studies
+stop at a single decision and check it in simulation, without integrating detection, path selection,
+and adaptation into one loop that actually reprograms the data plane. We close that loop end-to-end
+on emulated OpenFlow. Second, several methods are labelled reinforcement learning even though each
+decision is taken from an independent observation. We are explicit that detection is contextual
+classification and the online stage is a non-stationary bandit, and we benchmark each against the
+right baseline.</p>
+
+<h2>III. System Design</h2>
+<p>The controller runs as a Ryu application over an Open vSwitch data plane (OpenFlow 1.3), emulated
+in Mininet. The decision logic is kept separate from the Ryu event handlers so it can be tested off
+the data plane, and the recovery loop is exposed as four cooperating stages: detection, localization,
+resolution, and learning (Fig. 1).</p>
+
+<figure>
+  <div class="arch">
+    <div class="box">Telemetry &amp; port-status</div><span class="arr">→</span>
+    <div class="box">Detect &amp; localize</div><span class="arr">→</span>
+    <div class="box">Resolve<br>best path</div><span class="arr">→</span>
+    <div class="box">Actuate<br><code>OFPFlowMod</code></div><span class="arr">→</span>
+    <div class="box">Data plane<br>(OVS mesh)</div>
+    <div class="fb">↑ telemetry feeds detection · outcome → reward → <b>Learn (re-fit resolver)</b> → back to Resolve ↑</div>
+  </div>
+  <figcaption><b>Fig. 1.</b> The self-healing loop. Telemetry and port-status feed detection and
+  localization; the resolver selects a path and the controller actuates it; each recovery's outcome
+  becomes a reward the learner uses to re-fit the resolver, closing the loop.</figcaption>
+</figure>
+
+<h3>A. Telemetry and state</h3>
+<p>Each polling interval, byte counters become throughput:</p>
+<div class="eq">Throughput = (B<sub>cur</sub> − B<sub>prev</sub>) × 8 / (T<sub>interval</sub> × 1000)</div>
+<p>Throughput, packet loss, and a latency proxy are scaled to [0,1] so no single feature dominates.
+A complete loss of throughput on an active port is read as a link-down condition. Fig. 2 shows a
+representative trace.</p>
+<figure>
+  <img src="figures/Telemetry_Graph.png" alt="telemetry trace">
+  <figcaption><b>Fig. 2.</b> Per-port telemetry over time (switch 1, port 2): throughput (left axis)
+  and packet-loss rate (right axis). Loss jumps to its maximum when the link fails, the transition the
+  detector must catch.</figcaption>
+</figure>
+
+<h3>B. Decision, resolution, and learning</h3>
+<p>The decision unit maps the state to keep-or-reroute. On a reroute it builds the topology graph with
+the failed element removed, lists candidates with a k-shortest-paths search, and scores each with a
+scale-free objective:</p>
+<div class="eq">U(p) = w<sub>1</sub>(−latency) + w<sub>2</sub>(capacity) + w<sub>3</sub>(−loss) + w<sub>4</sub>(−hops)</div>
+<p>each term min–max normalized across candidates; fixed recovery weights w = [0.5, 1.0, 1.5, 0.1].
+The best path is compiled to per-switch <code>OFPFlowMod</code> rules and installed fail-secure. Each
+recovery's outcome (throughput, remaining loss, time) becomes a reward
+r = β·throughput − α·loss − t<sub>rec</sub>; a learner periodically re-fits the weights from recent
+experience, accepting an update only if a held-out correlation does not fall.</p>
+
+<h2>IV. Implementation</h2>
+<p>The data plane is emulated in Mininet with Open vSwitch and OpenFlow 1.3; the control plane is Ryu
+in a Python virtual environment. The base topology carries a redundant link (a two-hop primary and a
+direct backup). Framework-level studies use a seven-switch mesh with three node-disjoint paths of
+distinct bandwidth and delay, plus a second topology for the localization generalization test.</p>
+
+<h2>V. Evaluation</h2>
+
+<h3>A. Fault-detection accuracy</h3>
+<p>Stratified 70/30 split before any oversampling; oversampling on the training split only; five seeds.
+No false alarm on the held-out normal class.</p>
+<table>
+  <caption><b>Table I.</b> Held-out fault detection (5 seeds, mean±std).</caption>
+  <tr><th class="l">Metric</th><th>Value</th></tr>
+  <tr><td class="l">Accuracy</td><td>0.940 ± 0.012</td></tr>
+  <tr><td class="l">Precision</td><td>1.000 ± 0.000</td></tr>
+  <tr><td class="l">Recall</td><td>0.927 ± 0.015</td></tr>
+  <tr><td class="l">F1</td><td>0.962 ± 0.008</td></tr>
+</table>
+<figure>
+  <img src="figures/confusion_matrix.png" alt="confusion matrix" style="max-width:70%">
+  <figcaption><b>Fig. 3.</b> Summed confusion matrix over five held-out folds. No false positives.</figcaption>
+</figure>
+
+<h3>B. Comparison with simple baselines</h3>
+<p>On identical splits, both lightweight classifiers do better than the RL agent, so detection quality
+does not come from learning.</p>
+<table>
+  <caption><b>Table II.</b> Method comparison, held-out F1 (5 seeds, mean±std).</caption>
+  <tr><th class="l">Method</th><th>Acc.</th><th>Prec.</th><th>Rec.</th><th>F1</th></tr>
+  <tr><td class="l">Loss-threshold rule</td><td>0.695</td><td>1.000</td><td>0.630</td><td>0.773</td></tr>
+  <tr><td class="l">Logistic regression</td><td>0.960</td><td>1.000</td><td>0.952</td><td>0.975</td></tr>
+  <tr><td class="l">k-NN (k=5)</td><td>1.000</td><td>1.000</td><td>1.000</td><td><b>1.000</b></td></tr>
+  <tr><td class="l">PPO agent</td><td>0.940</td><td>1.000</td><td>0.927</td><td>0.962</td></tr>
+</table>
+<figure>
+  <img src="figures/baseline_comparison.png" alt="baseline comparison" style="max-width:85%">
+  <figcaption><b>Fig. 4.</b> Held-out F1 of the PPO agent versus simple baselines.</figcaption>
+</figure>
+
+<h3>C. End-to-end recovery</h3>
+<p>After failing the primary link, connectivity is restored with no sustained loss. Recovery time
+differs only by the telemetry cadence, not the flow install.</p>
+<table>
+  <caption><b>Table III.</b> Recovery time by controller variant (single mid-link fault).</caption>
+  <tr><th class="l">Variant</th><th>Recovery time</th><th>Bounded by</th></tr>
+  <tr><td class="l">Event-driven (port-status)</td><td>40 ± 13 ms</td><td>OF event → flow mod</td></tr>
+  <tr><td class="l">PPO-driven (telemetry)</td><td>3.4 ± 0.6 s</td><td>3 s statistics poll</td></tr>
+</table>
+<p>Data-plane RTT: primary path 31.1 ms (3.5 ms jitter), backup 18.1 ms (1.4 ms jitter).</p>
+
+<h3>D. Recovery mechanism vs. an OpenFlow baseline</h3>
+<table>
+  <caption><b>Table IV.</b> Recovery time by mechanism and fault type.</caption>
+  <tr><th class="l">Mechanism</th><th>Node fault</th><th>Single mid-link fault</th></tr>
+  <tr><td class="l">Fast-failover (OFPGT_FF)</td><td>52 ± 10 ms</td><td><b>no recovery</b></td></tr>
+  <tr><td class="l">Controller reroute (ours)</td><td>40 ± 13 ms</td><td>40 ± 13 ms</td></tr>
+</table>
+<p>Per-switch fast-failover cannot recover a mid-link fault the near switch never sees; the global-view
+controller reroutes both endpoints in ~40 ms.</p>
+
+<h3>E. Localization at scale</h3>
+<p>Telemetry alone cannot localize a fault (measured precision ≈ 0.10), so localization uses OpenFlow
+port-status. It pinpoints every hard fault across both topologies, generalizing to the unseen second
+topology by construction.</p>
+<table>
+  <caption><b>Table V.</b> Hybrid fault localization. Mean latency 0.21 s; the production app is event-driven.</caption>
+  <tr><th class="l">Topology</th><th>Hard faults</th><th>Localized</th><th>Accuracy</th><th>Congestion FA</th></tr>
+  <tr><td class="l">mesh</td><td>10</td><td>10</td><td>1.000</td><td>0</td></tr>
+  <tr><td class="l">mesh2</td><td>9</td><td>9</td><td>1.000</td><td>0</td></tr>
+  <tr><td class="l"><b>Overall</b></td><td><b>19</b></td><td><b>19</b></td><td><b>1.000</b></td><td><b>0</b></td></tr>
+</table>
+
+<h3>F. Choosing the recovery path</h3>
+<p>We measure each survivor's live QoS, then map each strategy to its chosen path. Composite QoS =
+throughput − 0.05·latency − 0.2·loss.</p>
+<table>
+  <caption><b>Table VI.</b> Composite QoS by strategy, 5 scenarios × 8 seeds (mean).</caption>
+  <tr><th class="l">Scenario</th><th>fixed</th><th>short</th><th>widest</th><th>rand</th><th>resolver</th><th>oracle</th></tr>
+  <tr><td class="l">congest_B</td><td>−0.1</td><td>−0.1</td><td>12.7</td><td>4.3</td><td><b>12.7</b></td><td>12.7</td></tr>
+  <tr><td class="l">loss_B</td><td>−4.8</td><td>−4.8</td><td>8.4</td><td>0.2</td><td><b>8.4</b></td><td>8.4</td></tr>
+  <tr><td class="l">congest_loss_B</td><td>−5.2</td><td>−5.2</td><td>9.6</td><td>0.6</td><td><b>9.6</b></td><td>9.6</td></tr>
+  <tr><td class="l">congest_C_ctrl</td><td>5.4</td><td>5.4</td><td>5.4</td><td>−0.4</td><td><b>5.4</b></td><td>5.4</td></tr>
+  <tr><td class="l">loss_C_fat</td><td>6.1</td><td>6.1</td><td>−13.2</td><td>−2.4</td><td><b>6.1</b></td><td>6.1</td></tr>
+</table>
+<p>The resolver beats the loss-blind baselines in three of five scenarios, is never worse than
+widest-path, and clearly beats it in loss_C_fat (6.1±3.6 vs −13.2±4.5), where the loss sits on the
+high-capacity path. Matching the oracle here is a robustness check, not an optimality claim: the loss
+gaps (16–33 points) sit well outside the σ = 0.05 observation noise, so the noisy and true inputs
+rarely disagree.</p>
+
+<h3>G. Learning on a changing network</h3>
+<p>A nine-day schedule drifts the degradation between survivors; the decisive signal (loss) is invisible
+at decision time, so the right path must be learned from rewards. Three agents share the day-0 policy:
+online (RL), frozen, and an adaptive sliding-window bandit.</p>
+<table>
+  <caption><b>Table VII.</b> Mean recovery reward per day over 8 seeds (r = tput − 0.5·loss − t<sub>rec</sub>).</caption>
+  <tr><th>Day</th><th>online</th><th>frozen</th><th>adaptive</th><th>p(degrade B)</th></tr>
+  <tr><td>0</td><td>10.2</td><td>13.0</td><td>8.4</td><td>0.90</td></tr>
+  <tr><td>2</td><td>8.7</td><td>11.3</td><td>9.1</td><td>0.70</td></tr>
+  <tr><td>4</td><td>−1.6</td><td>−1.7</td><td>−1.7</td><td>0.50</td></tr>
+  <tr><td>6</td><td>1.3</td><td>0.3</td><td>−0.5</td><td>0.30</td></tr>
+  <tr><td>7</td><td>3.1</td><td>−9.1</td><td>1.0</td><td>0.20</td></tr>
+  <tr><td>8</td><td>4.8</td><td>−11.0</td><td>6.7</td><td>0.10</td></tr>
+</table>
+<figure>
+  <svg viewBox="0 0 500 250" width="100%" style="max-width:560px;border:1px solid #eee;font-family:Arial,sans-serif;font-size:11px">
+    <!-- axes -->
+    <line x1="40" y1="20" x2="40" y2="220" stroke="#999"/>
+    <line x1="40" y1="220" x2="470" y2="220" stroke="#999"/>
+    <!-- zero line -->
+    <line x1="40" y1="123.7" x2="456" y2="123.7" stroke="#ddd" stroke-dasharray="3,3"/>
+    <text x="6" y="26" fill="#666">+14</text>
+    <text x="12" y="127" fill="#666">0</text>
+    <text x="4" y="224" fill="#666">−13</text>
+    <text x="230" y="245" fill="#666">Day →</text>
+    <!-- online -->
+    <polyline fill="none" stroke="#1a4f8b" stroke-width="2"
+      points="40,47.9 92,76.3 144,59.2 196,120.5 248,135.5 300,146.8 352,114.5 404,100.6 456,88.2"/>
+    <!-- frozen -->
+    <polyline fill="none" stroke="#c0392b" stroke-width="2" stroke-dasharray="6,3"
+      points="40,27.7 92,66.2 144,40.0 196,111.0 248,136.4 300,163.8 352,121.8 404,191.3 456,204.9"/>
+    <!-- adaptive -->
+    <polyline fill="none" stroke="#e67e22" stroke-width="2" stroke-dasharray="2,3"
+      points="40,61.5 92,73.0 144,56.6 196,110.0 248,136.4 300,145.8 352,127.4 404,116.7 456,74.4"/>
+    <!-- legend -->
+    <rect x="330" y="26" width="130" height="52" fill="#fff" stroke="#eee"/>
+    <line x1="338" y1="38" x2="360" y2="38" stroke="#1a4f8b" stroke-width="2"/><text x="365" y="42">online (RL)</text>
+    <line x1="338" y1="54" x2="360" y2="54" stroke="#c0392b" stroke-width="2" stroke-dasharray="6,3"/><text x="365" y="58">frozen</text>
+    <line x1="338" y1="70" x2="360" y2="70" stroke="#e67e22" stroke-width="2" stroke-dasharray="2,3"/><text x="365" y="74">adaptive</text>
+  </svg>
+  <figcaption><b>Fig. 5.</b> Mean recovery reward per day over eight seeds. As the world drifts the
+  frozen policy collapses, while the reinforcement-learning (online) policy and the adaptive bandit both
+  relearn the best path and recover.</figcaption>
+</figure>
+<p>The frozen model falls from 13.0 to −11.0; the online learner exceeds it in the late regime with
+p = 0.0039, shows no net forgetting, and matches the adaptive baseline (4.0 vs 3.8; p = 0.547).</p>
+
+<h3>H. Putting the loop together: one live run</h3>
+<p>All stages run in one live process over a drifting five-day schedule with twenty faults.</p>
+<table>
+  <caption><b>Table VIII.</b> End-to-end run: one live process, 5 drifting days, 20 faults. Day-mean
+  reward [18.7, 17.4, 10.1, −22.9, 10.7].</caption>
+  <tr><th class="l">Outcome</th><th>Result</th></tr>
+  <tr><td class="l">Faults detected (port-status, ~0.25 s)</td><td>20/20</td></tr>
+  <tr><td class="l">Valid recovery path installed</td><td>20/20</td></tr>
+  <tr><td class="l">Full reachability on a healthy-survivor choice</td><td>15/15</td></tr>
+  <tr><td class="l">Reachability overall</td><td>19/20</td></tr>
+  <tr><td class="l">Accepted learner updates</td><td>3</td></tr>
+  <tr><td class="l">Resolver preference (day 0 → final)</td><td>C → B</td></tr>
+</table>
+
+<h3>I. Where learning belongs: detection versus recovery</h3>
+<p>Reinforcement learning drives how the controller adapts its recovery policy, but it is not the right
+tool for every stage. Detection is a stateless test: a classifier matches or beats the PPO agent and
+avoids its poll-bound latency, so we keep it simple. Recovery is sequential: the controller acts,
+observes a reward, and improves as the network drifts, which is where reinforcement learning pays off.</p>
+
+<h2>VI. Discussion and Threats to Validity</h2>
+<p>Detection is classification, not sequential control, and the dataset is small and near-separable
+(zero-throughput labeling inflates scores). The path-selection and learning studies use two survivors
+after a single failure, and the learning stage is a two-arm non-stationary bandit; larger multi-path
+topologies are the main generalization threat. The learning curve is trace-driven from live-measured
+QoS anchors, so a fully live multi-day loop remains future work. We use exact paired sign-flip
+permutation tests; eight seeds give a comfortable margin under 0.05. A single theme connects the
+results: learning helps where the decision is sequential and the world is partially observed, while a
+simple method suffices for the stateless trigger.</p>
+
+<h2>VII. Conclusion and Future Work</h2>
+<p>We presented a self-healing SDN controller that recovers from link failures by reprogramming the
+data plane, extended into a framework that localizes faults, selects recovery paths against honest
+baselines, and adapts its policy as the network drifts. It localizes every injected hard fault, restores
+connectivity within a bounded transient, chooses paths at least as well as a strong load-aware baseline
+and better when loss and bandwidth disagree, and keeps recovery quality high where a frozen model
+collapses. A simple method suffices for the stateless detection trigger, while reinforcement learning
+from execution rewards lets the recovery policy adapt as the network changes. Future work includes a
+genuinely sequential formulation, larger multi-path and multi-fault topologies, gray-failure detection,
+a fully live multi-day learning loop, and larger, less separable datasets.</p>
+
+<p class="verified" style="margin-top:24px">Every quantitative value above is reproduced from a result
+file in <code>docs/</code> and <code>results/tables/</code>. See <code>REPRODUCE.md</code> for exact
+commands and <code>docs/TEAM_GUIDE.md</code> for a file-by-file walkthrough.</p>
+
+</body>
+</html>
