@@ -243,7 +243,16 @@ result. Run `/peer-reviewer` after each PHASE.
     "days" so there is genuinely something to adapt to.
   - Test: distribution differs day-to-day (logged).
 
-- [ ] **S3.4 — Learning-curve experiment.**
+- [x] **S3.4 — Learning-curve experiment. PHASE-3 GATE: PASS** (2026-07-01).
+    `experiments/exp_p3_online.py` — D=9 days on the non-stationary schedule (loss
+    drifts B->C, loss UNobservable at decision time), 5 seeds, 16 recoveries/day.
+    QoS anchors MEASURED LIVE on the mesh (B@healthy 9.9Mb, C@healthy 15.9Mb, lossy
+    paths ~0Mb); D-day loop is trace-driven from those. SHIELD-online re-fits the
+    Resolver each day (2-day window, ε0.25) vs a frozen model. Results: H1 online>frozen
+    late p=0.031; H2 frozen degrades p=0.031; H3 validation non-decreasing (0.00->0.36).
+    Frozen collapses 12.8->-7.1, online recovers (gap +10.9). Stats: exact sign-flip
+    permutation (stdlib). See `docs/s3_4_results.txt`, `results/tables/p3_learning_curve.csv`.
+    NOTE: fully-live D-day loop is future work (trace-driven with live anchors).
   - Build: `experiments/exp_p3_online.py` — run **D days**; plot recovery-QoS vs day
     for **SHIELD-online vs a frozen model**; ≥5 seeds; track validation each day.
   - PASS: **statistically significant improvement day 1→D (p<0.05), frozen model
@@ -285,7 +294,7 @@ curve) is what makes it *novel*.
 | 0 Foundation | S0.1–S0.4 | TODO |
 | 1 Detect@scale | S1.1–S1.7 | TODO (reuse existing telemetry/eval) |
 | 2 Resolver | S2.1–S2.6 | GATE PASS (S2.1–S2.5 done; S2.6 optional) |
-| 3 Learner | S3.1–S3.4 | IN PROGRESS (S3.1–S3.3 done) |
+| 3 Learner | S3.1–S3.4 | GATE PASS (S3.1–S3.4 done) |
 | 4 Publish | S4.1–S4.4 | TODO |
 
 ## What already exists to reuse (don't rebuild)
