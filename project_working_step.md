@@ -180,7 +180,15 @@ result. Run `/peer-reviewer` after each PHASE.
     recover; `pingall` recovers.
   - PASS: automatic recovery on the big topology.
 
-- [ ] **S2.5 — Best-solution experiment.**
+- [x] **S2.5 — Best-solution experiment. PHASE-2 GATE: PASS** (2026-07-01).
+    `experiments/exp_p2_resolver.py` — live mesh, 4 scenarios (congest_B/loss_B/
+    congest_loss_B + congest_C control), 5 seeds; measures per-survivor-path QoS
+    (iperf TCP tput + ping lat/loss) and maps each strategy to its chosen path.
+    Composite QoS: SHIELD beats fixed_failover AND shortest_path in 3/4 scenarios
+    (12.8/13.0/8.2 vs negative), ties in the control (correctly picks B), and equals
+    the oracle in every scenario (within10%=True). Recovery weights lat0.5/cap1/loss1.5/
+    hops0.1. See `docs/s2_5_results.txt`, `results/tables/p2_resolver_qos.csv`,
+    `results/logs/s2_5_resolver.log`.
   - Build: `experiments/exp_p2_resolver.py` — inject faults under **≥4 varying link
     conditions** (different delay/loss/bw); measure post-recovery **QoS** (throughput,
     loss, latency) for fixed-failover / shortest / random / **Resolver** / oracle; ≥5 seeds.
@@ -256,7 +264,7 @@ curve) is what makes it *novel*.
 |-------|------|--------|
 | 0 Foundation | S0.1–S0.4 | TODO |
 | 1 Detect@scale | S1.1–S1.7 | TODO (reuse existing telemetry/eval) |
-| 2 Resolver | S2.1–S2.6 | IN PROGRESS (S2.1–S2.4 done) |
+| 2 Resolver | S2.1–S2.6 | GATE PASS (S2.1–S2.5 done; S2.6 optional) |
 | 3 Learner | S3.1–S3.4 | TODO |
 | 4 Publish | S4.1–S4.4 | TODO |
 

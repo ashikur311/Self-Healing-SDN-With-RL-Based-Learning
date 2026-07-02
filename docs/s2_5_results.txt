@@ -1,0 +1,62 @@
+S2.5 — Best-solution (Resolver) experiment            PHASE-2 GATE: PASS
+================================================================================
+Build:  experiments/exp_p2_resolver.py  (live mesh, single-process, ovs-ofctl)
+Raw log: results/logs/s2_5_resolver.log   Table: results/tables/p2_resolver_qos.csv
+
+Design (honest + efficient): the five strategies differ ONLY in which surviving
+path they choose after the primary (Path A) fails, so we measure the live QoS of
+each survivor (B, C) once per seed (iperf TCP throughput + ping latency/loss) under
+that scenario's injected link conditions, then map each strategy -> its chosen path
+-> that measured QoS. Every reported number is a real measurement.
+
+Strategies:
+  fixed_failover  pre-provisioned order -> first backup = B (condition-blind)
+  shortest_path   lowest-latency survivor = B (condition-blind)
+  random_path     seeded random survivor (control)
+  SHIELD          Resolver scoring on OBSERVED bw/loss telemetry
+  oracle          same objective with the TRUE link state (upper bound)
+Recovery weights (fixed a priori, identical for SHIELD & oracle):
+  latency 0.5, capacity 1.0, loss 1.5, hops 0.1  (goodput/quality over raw latency).
+
+Scenarios (4), >=5 seeds each; primary A failed, survivors B & C:
+  congest_B        B throttled bw2   | C healthy   -> best C
+  loss_B           B loss 15%        | C healthy   -> best C
+  congest_loss_B   B bw3 + loss 10%  | C healthy   -> best C
+  congest_C_ctrl   C bw2 + loss 10%  | B healthy   -> best B   (CONTROL)
+
+Measured surviving-path QoS (seed-0 loss/lat shown; tput mean±std over 5 seeds):
+  congest_B       B: 2.6±0.1 Mb 0%   | C: 17.4±0.5 Mb 0%
+  loss_B          B: 0.0±0.0 Mb 16%  | C: 17.4±1.2 Mb 0%
+  congest_loss_B  B: 0.8±0.7 Mb 50%  | C: 16.3±1.4 Mb 0%
+  congest_C_ctrl  B: 10.4±0.6 Mb 0%  | C: 0.0±0.0 Mb 16%
+
+Composite QoS = tput_Mb - 0.05*lat_ms - 0.2*loss_pct  (mean±std over 5 seeds):
+  scenario        fixed    shortest  random    SHIELD    oracle    verdict
+  congest_B       -1.4     -1.4      1.2       12.8      12.8      WIN (beats both)
+  loss_B          -7.1     -7.1     -2.9       13.0      13.0      WIN
+  congest_loss_B  -7.9     -7.9     -3.1        8.2       8.2      WIN
+  congest_C_ctrl   7.8      7.8      4.8        7.8       7.8      tie (control)
+
+Strategy picks: fixed=B, shortest=B in ALL scenarios (condition-blind); SHIELD &
+oracle pick C in the three B-degraded scenarios and B in the control -- identical
+choices, so SHIELD achieves oracle-level QoS (within 10% == equal, wins by picking
+the path fixed/shortest are blind to).
+
+PASS gate: "Resolver beats fixed-failover AND shortest-path on composite QoS in
+>=3 of 4 scenarios, and within ~10% of oracle."
+  RESULT: wins = 3/4, within-10%-of-oracle = True  ->  PASS.
+
+Interpretation / honesty:
+  * Both conventional strategies default to the shortest/first backup (B); SHIELD's
+    advantage appears whenever that default is congested/lossy -- a common real
+    condition (shortest paths are often the most loaded). The control (C degraded)
+    confirms SHIELD is condition-AWARE: it correctly selects B there, matching the
+    baselines rather than blindly preferring C.
+  * SHIELD == oracle on every scenario: with accurate bw/loss telemetry the heuristic
+    Resolver is already optimal, so the FRAMEWORK (not an RL policy) is the
+    contribution. This motivates S2.6 (optional RL variant) being reported honestly.
+
+Regression: S2.1-S2.4 unit tests + S2.4 live recovery all still green.
+
+Phase 2 (M-B RESOLVER) headline milestone COMPLETE. S2.6 (RL variant) is optional.
+Next per plan: run /peer-reviewer on Phase 2, then Phase 3 (S3.1 learner) OR S2.6.
