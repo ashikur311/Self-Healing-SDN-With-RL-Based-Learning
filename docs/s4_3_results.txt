@@ -1,0 +1,47 @@
+S4.3 — Framework paper (SHIELD)                         PHASE-4: paper drafted
+================================================================================
+Build:  paper/shield.tex   (IEEEtran conference; shares paper/references.bib)
+Companion to paper/main.tex (the FYDP closed-loop-controller paper, left intact).
+
+DECISION (2026-07-02): wrote a NEW framework paper (paper/shield.tex) rather than
+overwriting main.tex, per FRAMEWORK_PLAN.md ("extend the current paper OR write a
+second paper"). main.tex (won FYDP) is preserved; shield.tex reframes the work
+around the SHIELD framework and its three pillars. Easy to merge later if desired.
+[User was away when asked; chose the non-destructive option.]
+
+STRUCTURE: Abstract, Intro (framework + 5 contributions), Related Work (reuses the
+main.tex positioning + Table I, reframed to the integrated loop), The SHIELD
+Framework (detect/resolve/learn architecture + objective eq. + reward), Evaluation
+(3 pillars, Tables II-IV), Threats to Validity (folds in the honest caveats +
+remaining review debt), Conclusion/Future Work.
+
+EVERY NUMBER [VERIFIED] against a result doc (11 tags):
+  Pillar 1 detection  -> docs/p1_detection_results.txt
+    localization 1.000 (19/19: mesh 10/10, mesh2 9/9), congestion FA=0, latency 0.21s,
+    pure-telemetry precision ~0.10 (the finding motivating the hybrid split).
+  Pillar 2 resolver   -> docs/s2_5_results.txt (HARDENED, p2 review M2/M3)
+    weights [0.5,1.0,1.5,0.1]; 5 scenarios x 5 seeds composite-QoS table verbatim;
+    beats loss-blind 3/5, ties widest-path on bandwidth, beats it on loss_C_fat
+    (7.1 vs -11.7), matches ground-truth oracle under noisy loss (sigma=0.05).
+  Pillar 3 learner    -> docs/s3_4_results.txt (HARDENED, p3 review M3/M4)
+    D=9 days x 8 seeds; per-day reward table verbatim; frozen collapses 13.0->-11.0;
+    H1 online>frozen p=0.0039, H2 frozen degrades p=0.0039, H3 no net forgetting
+    (val 0.32->0.46), H4 online MATCHES adaptive baseline (4.0 vs 3.8, p=0.547).
+
+HONESTY FRAMING carried into the paper (Threats): contribution is the integrated
+framework, NOT a learning algorithm; with accurate telemetry the heuristic resolver
+already matches the oracle, and the learner's value is adaptation under partial
+observability + drift. RL retained as component/ablation, not headline. Remaining
+p3 debt (M1 >=3-path topology, M2 pre-registration grid, M6 prior-regime holdout)
+and the trace-driven caveat are stated as future work in Sec. Threats.
+
+CHECKS (no TeX on VM; compile is S4.4/Overleaf):
+  * all 11 \cite keys resolve against references.bib          OK
+  * \begin/\end environments balance (13/13)                  OK
+  * every quantitative claim tagged [VERIFIED <doc>]          OK (11 tags)
+
+PASS gate (plan: "architecture + 3 pillar experiments + honest baselines/ablations,
+every number VERIFIED"): MET as a draft. Formal PASS = S4.4 (peer-review + Overleaf
+compile).
+
+NEXT: S4.4 — run /peer-reviewer on shield.tex, address findings, compile on Overleaf.

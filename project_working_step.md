@@ -280,8 +280,12 @@ result. Run `/peer-reviewer` after each PHASE.
   `REPRODUCE.md` (pinned two-interpreter env, offline test cmd, exact live-experiment
   CLIs with PASS gates + fixed seeds + provenance). Configs committed. See
   `docs/s4_2_results.txt`.
-- [ ] **S4.3 — Framework paper.** Extend `paper/` (or a new paper): architecture,
-  the three pillar experiments, honest baselines/ablations. Every number `[VERIFIED]`.
+- [x] **S4.3 — Framework paper.** DONE 2026-07-02: `paper/shield.tex` (NEW IEEEtran
+  paper; `main.tex` left intact) — SHIELD architecture + 3 pillar experiments
+  (detect 19/19, resolver vs oracle/widest, learner 8 seeds vs frozen+adaptive) +
+  honest baselines/ablations. Every number `[VERIFIED]` (11 tags) against
+  `docs/{p1_detection,s2_5,s3_4}_results.txt`; cites resolve, envs balance. No TeX
+  on VM -> compile is S4.4. See `docs/s4_3_results.txt`.
 - [ ] **S4.4 — Review + build.** Run `/peer-reviewer`; address findings; compile on
   Overleaf (no TeX on the VM).
 
