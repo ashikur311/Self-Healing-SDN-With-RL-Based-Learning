@@ -125,10 +125,10 @@ The paper makes the following contributions.
   telemetry, motivated by an empirical result that telemetry alone cannot localize;
   it pinpoints every injected hard fault across two topologies with no congestion
   false alarms (Section~\ref{sec:detect-scale}).
-  \item A loss-aware path selector benchmarked against loss-blind recovery, a strong
+  \item A loss-aware resolver benchmarked against loss-blind recovery, a strong
   load-aware widest-path router, and a ground-truth oracle, which isolates exactly
   where a multi-objective policy pays off (Section~\ref{sec:resolve}).
-  \item An online update rule for that selector, tested on a non-stationary network
+  \item An online update rule for that resolver, tested on a non-stationary network
   where the decisive signal is unobservable at decision time, against both a frozen
   ablation and an adaptive bandit baseline, with a paired permutation test over eight
   seeds (Section~\ref{sec:learn}).
@@ -472,9 +472,9 @@ event-driven). % [VERIFIED docs/p1_detection_results.txt]
 \subsection{Choosing the recovery path}
 \label{sec:resolve}
 Once a fault is localized, several surviving paths are usually available, and they
-are rarely equal. To test the path selector we fail the primary path and measure the
+are rarely equal. To test the resolver we fail the primary path and measure the
 live QoS of each survivor under the injected conditions using iperf TCP and ping,
-then map each strategy to the path it would pick. The selector, which sees loss with
+then map each strategy to the path it would pick. The resolver, which sees loss with
 observation noise $\sigma=0.05$, is compared against fixed-failover and shortest-path
 (both loss-blind), widest-path (a load-aware router that follows observed bottleneck
 bandwidth), a random control, and an oracle that uses ground-truth loss as a
@@ -490,7 +490,7 @@ $\text{tput}-0.05\,\text{lat}-0.2\,\text{loss}$.
 \footnotesize
 \begin{tabular}{lrrrrrr}
 \toprule
-Scenario & fixed & short & widest & rand & \textbf{ours} & oracle \\
+Scenario & fixed & short & widest & rand & \textbf{resolver} & oracle \\
 \midrule
 congest\_B      & $-0.1$ & $-0.1$ & $12.7$ & $4.3$  & $\mathbf{12.7}$ & $12.7$ \\
 loss\_B         & $-4.8$ & $-4.8$ & $8.4$  & $0.2$  & $\mathbf{8.4}$  & $8.4$  \\
@@ -501,19 +501,19 @@ loss\_C\_fat    & $6.1$  & $6.1$  & $-13.2$& $-2.4$ & $\mathbf{6.1}$  & $6.1$  \
 \end{tabular}
 \end{table}
 
-The selector beats the loss-blind baselines in three of five scenarios, is never
+The resolver beats the loss-blind baselines in three of five scenarios, is never
 materially worse than widest-path, and clearly beats it in \texttt{loss\_C\_fat},
 where the loss sits on the high-capacity path so a bandwidth-only router picks the
 worst survivor. Over eight seeds this margin is large relative to its spread,
-$6.1\pm3.6$ for our selector against $-13.2\pm4.5$ for widest-path. Because the
-selector sees loss through observation noise ($\sigma=0.05$) while the oracle sees
+$6.1\pm3.6$ for our resolver against $-13.2\pm4.5$ for widest-path. Because the
+resolver sees loss through observation noise ($\sigma=0.05$) while the oracle sees
 ground truth, matching the oracle here is a robustness check rather than a claim about
 closing an optimality gap: at these loss gaps of $16$ to $33$ points, which sit well
 outside the noise, the noisy and true inputs rarely disagree, so the two make the same
 choice. A regime in which the noise is comparable to the loss gap, where the oracle
-could separate from the selector, is left for future work. The reading we defend is
+could separate from the resolver, is left for future work. The reading we defend is
 deliberately modest. On
-pure-bandwidth faults, load-awareness alone is enough and the selector only ties
+pure-bandwidth faults, load-awareness alone is enough and the resolver only ties
 widest-path; the multi-objective, loss-aware policy earns its place when loss and
 bandwidth point in different directions, as they do in a gray failure on a fast link.
 
@@ -600,7 +600,7 @@ four separate experiments, we run the whole loop in one live process on the
 seven-switch mesh with background TCP and UDP traffic. A five-day schedule injects
 four faults per day, twenty in total, and the degradation drifts across survivors so
 that the currently best path changes over the run and cannot be read from telemetry
-at decision time. One shared path selector is carried through the run and re-fit by
+at decision time. One shared resolver is carried through the run and re-fit by
 the learner at the end of each day. For every fault the controller detects the failure
 from OpenFlow port-status in about $0.25$~s, selects a survivor with the objective in
 Eq.~\eqref{eq:obj}, installs the flow rules, measures the resulting QoS with iperf and
@@ -631,12 +631,12 @@ Selector preference (day 0 $\rightarrow$ final) & C $\rightarrow$ B \\
 The controller detects every fault and installs a valid recovery path on all twenty,
 and connectivity is complete whenever it selects a currently healthy survivor
 (Table~\ref{tab:e2e}). The single reachability blip is a case where, before adapting,
-the selector chose the survivor that was about to become lossy under load; a valid
+the resolver chose the survivor that was about to become lossy under load; a valid
 path was still installed, so this is a QoS and learning signal rather than a recovery
 failure. The day-mean reward tells the same story as the isolated learning study, now
 in one continuous run: recovery is strong while Path~C is healthy (days~0--1), drops
 sharply when the world flips and C turns lossy (day~3, $-22.9$), and returns to
-$+10.7$ on day~4 once the learner shifts the selector's preference from C to B and its
+$+10.7$ on day~4 once the learner shifts the resolver's preference from C to B and its
 weights move off the initial capacity-heavy setting. Detection, resolution, and online
 learning therefore operate together on the same live topology, which is the behaviour
 the paper sets out to demonstrate.
@@ -691,7 +691,7 @@ would harden the learning claim further.
 
 A single theme connects these results. Learning helps where the decision is
 sequential and the world is only partially observed. A simple classifier already
-detects faults, and with accurate telemetry the heuristic path selector already
+detects faults, and with accurate telemetry the heuristic resolver already
 matches the oracle, so the reward-driven learner earns its place specifically under
 partial observability and drift, where it adapts the recovery policy that a fixed rule
 cannot. The contribution is the integrated self-healing loop together with the
