@@ -26,6 +26,7 @@ from baselines.base import path_is_viable
 from baselines.shortest_path import ShortestPath
 from baselines.fixed_failover import FixedFailover
 from baselines.random_path import RandomPath
+from baselines.widest_path import WidestPath
 from baselines.oracle_path import OraclePath
 
 
@@ -39,7 +40,7 @@ def _active(exclude_edge=None, exclude_node=None):
 def test_all_return_valid_paths():
     nominal = build_graph()
     selectors = [ShortestPath(), FixedFailover(nominal, 's1', 's6'),
-                 RandomPath(), OraclePath()]
+                 RandomPath(), WidestPath(), OraclePath()]
     # healthy graph
     for s in selectors:
         p = s.select(nominal, 's1', 's6', seed=0)
@@ -81,6 +82,23 @@ def test_fixed_failover_order():
     print("  [3] fixed_failover uses pre-decided order ........... OK")
 
 
+def test_widest_path():
+    g = build_graph()
+    # On the healthy graph widest-path -> the fat Path C (bottleneck bw 20).
+    assert WidestPath().select(g, 's1', 's6') == ['s1', 's5', 's7', 's6']
+    # It reacts to observed bandwidth: throttle C's bottleneck below B's -> picks B.
+    g2 = build_graph()
+    g2['s1']['s5']['bw'] = 4
+    g2['s5']['s1']['bw'] = 4
+    assert WidestPath().select(g2, 's1', 's6') == ['s1', 's3', 's4', 's6']
+    # Blind spot: it ignores loss, so on a high-bw-but-lossy C it still picks C,
+    # whereas the loss-aware oracle avoids it (this is SHIELD's edge in S2.5).
+    lossy_C = {frozenset({'s1', 's5'}): 0.20}
+    assert WidestPath().select(g, 's1', 's6') == ['s1', 's5', 's7', 's6']
+    assert OraclePath().select(g, 's1', 's6', link_state=lossy_C) != ['s1', 's5', 's7', 's6']
+    print("  [5] widest_path: bw-aware but loss-blind ......... OK")
+
+
 def test_random_reproducible():
     g = build_graph()
     r = RandomPath()
@@ -97,5 +115,6 @@ if __name__ == '__main__':
     test_all_return_valid_paths()
     test_shortest_vs_oracle_under_loss()
     test_fixed_failover_order()
+    test_widest_path()
     test_random_reproducible()
     print("S2.3 PASS")

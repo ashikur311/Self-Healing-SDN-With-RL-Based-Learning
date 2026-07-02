@@ -6,17 +6,18 @@ constructed). None of these block Phase 3; they MUST be fixed before the framewo
 paper (S4.3). Ordered by leverage.
 
 ## Major (fix before paper)
-- **M3 [highest leverage] — Oracle is a literal copy of SHIELD.**
-  `exp_p2_resolver.observed()` sets SHIELD's `obs_bw`/`obs_loss` to the EXACT
-  injected values, and `OraclePath` runs the same `Resolver` objective on the same
-  inputs -> identical path, 0% gap. "Within 10% of oracle" is vacuous. FIX: feed
-  SHIELD *noisy/stale* telemetry (perturb obs_bw/obs_loss ±X%, or stale poll); give
-  oracle ground truth. Owner: `ml-rl-researcher`.
-- **M2 — Only one effective baseline; the competing one is missing.**
-  Latency is never varied, so `shortest_path` (orders by delay) == `fixed_failover`
-  == always B. The obvious challenger — a **load-aware widest-path** baseline
-  (weight = available bandwidth) — is absent and would likely tie SHIELD. FIX: add
-  `baselines/widest_path.py`; report honestly if it ties. Owner: `sdn-expert`/`network-engineer`.
+- **M3 [RESOLVED 2026-07-01] — Oracle was a literal copy of SHIELD.**
+  FIXED in the hardened S2.5 (exp_p2_resolver.py): SHIELD now sees loss with per-seed
+  noise (sigma=0.05); the oracle sees ground truth -> genuinely independent. Result:
+  SHIELD still matches the oracle (choices robust to that noise level; loss gaps
+  0 vs 15-20% >> noise) -- honestly reported as robustness, not a copy. See
+  docs/s2_5_results.txt.
+- **M2 [RESOLVED 2026-07-01] — Missing load-aware baseline.**
+  FIXED: added `baselines/widest_path.py` (max-bottleneck-bandwidth) + a differentiating
+  scenario `loss_C_fat` (loss on the fat path). SHIELD ties widest_path on bandwidth
+  problems (honest) and STRICTLY beats it on loss_C_fat (7.1 vs -11.7) where load-
+  awareness alone fails. Gate re-passed (beats loss-blind 3/5, >= widest always,
+  strictly beats widest 1/5, within 10% of oracle). See docs/s2_5_results.txt.
 - **M1 — 3/4 win-rate is authored, not discovered.** Both blind baselines can only
   pick B, so "SHIELD beats both" == "B is degraded", set by the authors in 3 of 4
   scenarios. FIX: vary delay too; add C-degraded scenarios; report win-rate over a

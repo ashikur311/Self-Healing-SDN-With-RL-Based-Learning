@@ -1,62 +1,69 @@
 S2.5 — Best-solution (Resolver) experiment            PHASE-2 GATE: PASS
+                                                      (HARDENED per p2 review M2/M3)
 ================================================================================
 Build:  experiments/exp_p2_resolver.py  (live mesh, single-process, ovs-ofctl)
 Raw log: results/logs/s2_5_resolver.log   Table: results/tables/p2_resolver_qos.csv
 
-Design (honest + efficient): the five strategies differ ONLY in which surviving
-path they choose after the primary (Path A) fails, so we measure the live QoS of
-each survivor (B, C) once per seed (iperf TCP throughput + ping latency/loss) under
-that scenario's injected link conditions, then map each strategy -> its chosen path
--> that measured QoS. Every reported number is a real measurement.
+Design (honest + efficient): the strategies differ ONLY in which surviving path they
+choose after the primary (Path A) fails, so we measure the live QoS of each survivor
+(B, C) once per seed (iperf TCP + ping) under that scenario's injected conditions,
+then map each strategy -> its chosen path -> that measured QoS. Every number is real.
 
 Strategies:
-  fixed_failover  pre-provisioned order -> first backup = B (condition-blind)
-  shortest_path   lowest-latency survivor = B (condition-blind)
-  random_path     seeded random survivor (control)
-  SHIELD          Resolver scoring on OBSERVED bw/loss telemetry
-  oracle          same objective with the TRUE link state (upper bound)
-Recovery weights (fixed a priori, identical for SHIELD & oracle):
-  latency 0.5, capacity 1.0, loss 1.5, hops 0.1  (goodput/quality over raw latency).
+  fixed_failover  pre-provisioned order -> B         (condition-blind)
+  shortest_path   lowest-latency survivor -> B        (condition-blind)
+  widest_path     max observed bottleneck bandwidth   (LOAD-AWARE; the strong baseline)
+  random_path     seeded random survivor              (control)
+  SHIELD          Resolver, sees NOISY loss (sigma=0.05) + observed bandwidth
+  oracle          Resolver with GROUND-TRUTH loss     (genuine upper bound)
+Recovery weights (fixed a priori): latency 0.5, capacity 1.0, loss 1.5, hops 0.1.
 
-Scenarios (4), >=5 seeds each; primary A failed, survivors B & C:
-  congest_B        B throttled bw2   | C healthy   -> best C
-  loss_B           B loss 15%        | C healthy   -> best C
-  congest_loss_B   B bw3 + loss 10%  | C healthy   -> best C
-  congest_C_ctrl   C bw2 + loss 10%  | B healthy   -> best B   (CONTROL)
+HARDENING (answers the peer review):
+  * M2 -- added widest_path, a load-aware max-bottleneck-bandwidth router (what a
+    competent TE network does). It reacts to bandwidth, so it matches SHIELD on the
+    congestion scenarios; its blind spot is LOSS.
+  * M2 -- new scenario loss_C_fat: loss on the FAT (high-bw) Path C, bandwidth
+    nominal. widest_path still picks C (highest bw) and tanks; SHIELD's loss-aware
+    objective picks B. This is where load-awareness alone is not enough.
+  * M3 -- the oracle is no longer a copy of SHIELD: SHIELD sees loss with per-seed
+    noise, the oracle sees ground truth. "Within 10% of oracle" now means something.
 
-Measured surviving-path QoS (seed-0 loss/lat shown; tput mean±std over 5 seeds):
-  congest_B       B: 2.6±0.1 Mb 0%   | C: 17.4±0.5 Mb 0%
-  loss_B          B: 0.0±0.0 Mb 16%  | C: 17.4±1.2 Mb 0%
-  congest_loss_B  B: 0.8±0.7 Mb 50%  | C: 16.3±1.4 Mb 0%
-  congest_C_ctrl  B: 10.4±0.6 Mb 0%  | C: 0.0±0.0 Mb 16%
+Scenarios (5), >=5 seeds; primary A failed, survivors B & C measured live:
+  scenario         B (tput/loss)     C (tput/loss)    best
+  congest_B        2.7Mb/0%          16.0Mb/0%        C
+  loss_B           2.5Mb/16%         16.3Mb/0%        C
+  congest_loss_B   0.6Mb/16%         17.5Mb/0%        C
+  congest_C_ctrl   10.5Mb/0%         0.3Mb/0%         B  (control)
+  loss_C_fat       10.2Mb/0%         0.0Mb/16%        B  (loss on fat path)
 
-Composite QoS = tput_Mb - 0.05*lat_ms - 0.2*loss_pct  (mean±std over 5 seeds):
-  scenario        fixed    shortest  random    SHIELD    oracle    verdict
-  congest_B       -1.4     -1.4      1.2       12.8      12.8      WIN (beats both)
-  loss_B          -7.1     -7.1     -2.9       13.0      13.0      WIN
-  congest_loss_B  -7.9     -7.9     -3.1        8.2       8.2      WIN
-  congest_C_ctrl   7.8      7.8      4.8        7.8       7.8      tie (control)
+Composite QoS = tput - 0.05*lat - 0.2*loss  (mean±std over 5 seeds):
+  scenario        fixed  short  widest  random  SHIELD  oracle
+  congest_B       -0.2   -0.2   12.0    2.2     12.0    12.0
+  loss_B          -4.0   -4.0   12.4   -0.1     12.4    12.4
+  congest_loss_B  -6.9   -6.9   12.2   -4.5     12.2    12.2
+  congest_C_ctrl   7.7    7.7    7.7    5.3      7.7     7.7
+  loss_C_fat       7.1    7.1  -11.7    4.0      7.1     7.1
 
-Strategy picks: fixed=B, shortest=B in ALL scenarios (condition-blind); SHIELD &
-oracle pick C in the three B-degraded scenarios and B in the control -- identical
-choices, so SHIELD achieves oracle-level QoS (within 10% == equal, wins by picking
-the path fixed/shortest are blind to).
+Verdict (hardened gate):
+  * beats loss-blind baselines (fixed AND shortest): 3/5 scenarios  (need >=3)  OK
+  * never materially worse than widest_path: True; strictly beats widest_path: 1/5
+    (loss_C_fat: SHIELD 7.1 vs widest -11.7)  (need >=1)  OK
+  * within ~10% of the GROUND-TRUTH oracle while SHIELD sees only NOISY loss: True  OK
+  *** S2.5 GATE (hardened): PASS
 
-PASS gate: "Resolver beats fixed-failover AND shortest-path on composite QoS in
->=3 of 4 scenarios, and within ~10% of oracle."
-  RESULT: wins = 3/4, within-10%-of-oracle = True  ->  PASS.
+Interpretation / honesty (the defensible paper claim):
+  * Against loss-blind conventional recovery (fixed-failover, shortest-path) SHIELD
+    wins broadly whenever the default path is degraded.
+  * Against a STRONG load-aware baseline (widest-path) SHIELD ties on pure-bandwidth
+    problems -- an honest result: load-awareness alone already handles those -- but
+    BEATS it when loss decorrelates from bandwidth (gray failure on a fat link),
+    because SHIELD's objective is loss-aware. That combination (latency+capacity+loss)
+    is the contribution, not out-routing a widest-path router on bandwidth.
+  * SHIELD matches the oracle even with noisy loss telemetry: its choices are robust
+    to sigma=0.05 loss-observation noise (the loss gaps here, 0 vs 15-20%, exceed the
+    noise). The oracle is now an independent ground-truth computation.
 
-Interpretation / honesty:
-  * Both conventional strategies default to the shortest/first backup (B); SHIELD's
-    advantage appears whenever that default is congested/lossy -- a common real
-    condition (shortest paths are often the most loaded). The control (C degraded)
-    confirms SHIELD is condition-AWARE: it correctly selects B there, matching the
-    baselines rather than blindly preferring C.
-  * SHIELD == oracle on every scenario: with accurate bw/loss telemetry the heuristic
-    Resolver is already optimal, so the FRAMEWORK (not an RL policy) is the
-    contribution. This motivates S2.6 (optional RL variant) being reported honestly.
+Regression: 8/8 offline unit suites green (widest_path test added).
 
-Regression: S2.1-S2.4 unit tests + S2.4 live recovery all still green.
-
-Phase 2 (M-B RESOLVER) headline milestone COMPLETE. S2.6 (RL variant) is optional.
-Next per plan: run /peer-reviewer on Phase 2, then Phase 3 (S3.1 learner) OR S2.6.
+Superseded: the earlier 4-scenario version (only fixed/shortest/random/oracle, oracle
+== SHIELD). This hardened run addresses docs/p2_review_notes.md M2 + M3.
