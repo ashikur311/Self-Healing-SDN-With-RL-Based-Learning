@@ -28,6 +28,7 @@
 \usepackage{algpseudocode}
 \usepackage{caption}
 \usepackage[hidelinks]{hyperref}
+\renewcommand{\bibname}{References}
 
 \title{\textbf{Self-Healing SDN using Reinforcement Learning:\\
 An Approach to Autonomous Fault Recovery}}
@@ -556,11 +557,13 @@ Loss saturates when the monitored link fails, the transition the detector must c
 \subsection{Autonomous Decision Testing}
 On the illustrative live test the trained agent behaved deterministically: it took no action
 on minor latency increases and initiated recovery only on genuine link failures.
+{\footnotesize
 \begin{verbatim}
-Network State: NORMAL TRAFFIC     [tput 1500.0, loss 0.00, delay 1.5] -> Do Nothing
-Network State: MEDIUM CONGESTION  [tput 4500.0, loss 0.02, delay 5.0] -> Do Nothing
-Network State: SEVERE FAULT       [tput 0.0,    loss 1.00, delay 15.0]-> Reroute (Recovery)
+NORMAL TRAFFIC    [tput 1500.0, loss 0.00, delay 1.5]  -> Do Nothing
+MEDIUM CONGESTION [tput 4500.0, loss 0.02, delay 5.0]  -> Do Nothing
+SEVERE FAULT      [tput    0.0, loss 1.00, delay 15.0] -> Reroute (Recovery)
 \end{verbatim}
+}
 
 \subsection{Fault-Detection Accuracy}
 Moving from the illustrative test to a rigorous evaluation, the detector was trained and
@@ -575,7 +578,8 @@ final design keeps detection simple and reserves learning for the recovery polic
 
 \begin{table}[t]
 \centering
-\caption{Held-out fault detection (5 seeds, mean $\pm$ std). % [VERIFIED evaluate_agent.py]}
+% [VERIFIED evaluate_agent.py]
+\caption{Held-out fault detection (5 seeds, mean $\pm$ std).}
 \label{tab:detect}
 \begin{tabular}{lc}
 \toprule
@@ -591,7 +595,8 @@ F1 & $0.962 \pm 0.008$ \\
 
 \begin{table}[t]
 \centering
-\caption{Method comparison, held-out F1 (5 seeds). % [VERIFIED compare_methods.py]}
+% [VERIFIED compare_methods.py]
+\caption{Method comparison, held-out F1 (5 seeds).}
 \label{tab:baselines}
 \begin{tabular}{lcccc}
 \toprule
@@ -614,8 +619,9 @@ localises every injected hard fault across both topologies with no congestion fa
 
 \begin{table}[t]
 \centering
+% [VERIFIED docs/p1_detection_results.txt]
 \caption{Hybrid fault localisation. Mean latency $0.21$~s; the production controller is
-event-driven. % [VERIFIED docs/p1_detection_results.txt]}
+event-driven.}
 \label{tab:localize}
 \begin{tabular}{lcccc}
 \toprule
@@ -645,8 +651,8 @@ global-view controller reroutes both endpoints in about $40$~ms.
 
 \begin{table}[t]
 \centering
-\caption{Recovery time by controller variant (single mid-link fault).
-% [VERIFIED docs/recovery_latency_results.txt]}
+% [VERIFIED docs/recovery_latency_results.txt]
+\caption{Recovery time by controller variant (single mid-link fault).}
 \label{tab:variants}
 \begin{tabular}{lcc}
 \toprule
@@ -660,7 +666,8 @@ PPO-driven (telemetry) & $3.4\pm0.6$~s & 3~s statistics poll \\
 
 \begin{table}[t]
 \centering
-\caption{Recovery by mechanism and fault type. % [VERIFIED failover_agent.py]}
+% [VERIFIED failover_agent.py]
+\caption{Recovery by mechanism and fault type.}
 \label{tab:offail}
 \begin{tabular}{lcc}
 \toprule
@@ -686,8 +693,8 @@ rather than an optimality claim. % [VERIFIED docs/s2_5_results.txt]
 \begin{table}[t]
 \centering
 \footnotesize
-\caption{Composite QoS by strategy, 5 scenarios $\times$ 8 seeds (mean).
-% [VERIFIED docs/s2_5_results.txt]}
+% [VERIFIED docs/s2_5_results.txt]
+\caption{Composite QoS by strategy, 5 scenarios $\times$ 8 seeds (mean).}
 \label{tab:resolve}
 \begin{tabular}{lrrrrrr}
 \toprule
@@ -716,8 +723,9 @@ adaptive baseline ($4.0$ versus $3.8$; $p=0.547$). % [VERIFIED docs/s3_4_results
 \begin{table}[t]
 \centering
 \footnotesize
+% [VERIFIED docs/s3_4_results.txt]
 \caption{Mean recovery reward per day over 8 seeds
-($r=\text{tput}-0.5\,\text{loss}-t_{\text{rec}}$). % [VERIFIED docs/s3_4_results.txt]}
+($r=\text{tput}-0.5\,\text{loss}-t_{\text{rec}}$).}
 \label{tab:learn}
 \begin{tabular}{crrrc}
 \toprule
@@ -751,9 +759,10 @@ Day & online & frozen & adaptive & $p(\text{degrade B})$ \\
 \addlegendentry{adaptive}
 \end{axis}
 \end{tikzpicture}
+% [VERIFIED docs/s3_4_results.txt]
 \caption{Mean recovery reward per day over eight seeds. The frozen policy collapses as the
 world drifts, while the reinforcement-learning (online) policy and the adaptive bandit both
-relearn the best path and recover. % [VERIFIED docs/s3_4_results.txt]}
+relearn the best path and recover.}
 \label{fig:learncurve}
 \end{figure}
 
@@ -770,8 +779,9 @@ failure. Over the run the learner shifts its path preference from~C to~B as the 
 \begin{table}[t]
 \centering
 \footnotesize
+% [VERIFIED docs/s4_1_results.txt]
 \caption{End-to-end run: one live process, 5 drifting days, 20 faults. Day-mean reward
-$[18.7, 17.4, 10.1, -22.9, 10.7]$. % [VERIFIED docs/s4_1_results.txt]}
+$[18.7, 17.4, 10.1, -22.9, 10.7]$.}
 \label{tab:e2e}
 \begin{tabular}{lc}
 \toprule
@@ -978,6 +988,7 @@ inflates absolute detection scores; larger and less separable datasets would str
 part of the evaluation.
 
 % =====================================================================
+\addcontentsline{toc}{chapter}{References}
 \begin{thebibliography}{10}
 \bibitem{boussaoud} K.~Boussaoud, A.~En-Nouaary, and M.~Ayache, ``Adaptive congestion
 detection and traffic control in software-defined networks via data-driven multi-agent

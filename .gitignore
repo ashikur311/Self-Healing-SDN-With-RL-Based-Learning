@@ -9,6 +9,13 @@ results/logs/
 *.log
 /tmp/
 
+# LaTeX build artifacts (regenerated; keep .tex + built .pdf)
+*.aux
+*.toc
+*.lof
+*.lot
+*.out
+
 # Editor / OS
 .DS_Store
 *.swp
