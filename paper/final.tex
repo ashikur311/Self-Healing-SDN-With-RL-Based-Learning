@@ -57,7 +57,7 @@ fault ($19$ of $19$) across two topologies with no congestion false alarms.
 Second, path choice: a loss-aware objective (latency, capacity, loss, hops) beats
 loss-blind recovery in three of five live scenarios, matches a strong load-aware
 widest-path router on bandwidth faults, and outperforms it when loss and bandwidth
-disagree, while staying within the margin of a ground-truth oracle.
+disagree, while staying robust to noisy loss telemetry against a ground-truth oracle.
 % [VERIFIED docs/s2_5_results.txt]
 Third, adaptation through reinforcement learning: on a drifting network where the
 decisive signal is not visible at decision time, the controller learns from the reward
@@ -474,7 +474,8 @@ live QoS of each survivor under the injected conditions using iperf TCP and ping
 then map each strategy to the path it would pick. The selector, which sees loss with
 observation noise $\sigma=0.05$, is compared against fixed-failover and shortest-path
 (both loss-blind), widest-path (a load-aware router that follows observed bottleneck
-bandwidth), a random control, and an oracle that uses ground-truth loss.
+bandwidth), a random control, and an oracle that uses ground-truth loss as a
+noise-robustness reference.
 Table~\ref{tab:resolve} reports the composite QoS,
 $\text{tput}-0.05\,\text{lat}-0.2\,\text{loss}$.
 % [VERIFIED docs/s2_5_results.txt]
@@ -501,9 +502,14 @@ The selector beats the loss-blind baselines in three of five scenarios, is never
 materially worse than widest-path, and clearly beats it in \texttt{loss\_C\_fat},
 where the loss sits on the high-capacity path so a bandwidth-only router picks the
 worst survivor. Over eight seeds this margin is large relative to its spread,
-$6.1\pm3.6$ for our selector against $-13.2\pm4.5$ for widest-path. The selector
-matches the oracle in every scenario despite seeing only noisy loss, because the
-observed loss gaps of $16$ to $33$ points are well outside the noise. The reading we defend is deliberately modest. On
+$6.1\pm3.6$ for our selector against $-13.2\pm4.5$ for widest-path. Because the
+selector sees loss through observation noise ($\sigma=0.05$) while the oracle sees
+ground truth, matching the oracle here is a robustness check rather than a claim about
+closing an optimality gap: at these loss gaps of $16$ to $33$ points, which sit well
+outside the noise, the noisy and true inputs rarely disagree, so the two make the same
+choice. A regime in which the noise is comparable to the loss gap, where the oracle
+could separate from the selector, is left for future work. The reading we defend is
+deliberately modest. On
 pure-bandwidth faults, load-awareness alone is enough and the selector only ties
 widest-path; the multi-objective, loss-aware policy earns its place when loss and
 bandwidth point in different directions, as they do in a gray failure on a fast link.
