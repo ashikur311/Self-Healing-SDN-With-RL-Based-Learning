@@ -19,3 +19,6 @@ results/logs/
 # Editor / OS
 .DS_Store
 *.swp
+
+# Claude Code local files
+.claude/
