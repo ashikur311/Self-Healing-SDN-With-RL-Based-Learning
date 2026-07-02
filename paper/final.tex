@@ -60,6 +60,10 @@ decision time, an online update rule keeps recovery quality high while a frozen 
 collapses ($p=0.0039$ over eight seeds), and it tracks the drift as well as a
 purpose-built adaptive baseline.
 % [VERIFIED docs/s3_4_results.txt]
+We then run all three stages together in one live process over a drifting five-day
+schedule, where the controller detects every injected fault, installs a valid recovery
+path each time, and shifts its path preference as the network changes.
+% [VERIFIED docs/s4_1_results.txt]
 A recurring, honest finding runs through the study: the value sits in the integrated
 loop and its actuation, not in a particular learning algorithm. Simple classifiers
 match the reinforcement-learning agent, and with accurate telemetry the heuristic
@@ -115,6 +119,10 @@ The paper makes the following contributions.
   where the decisive signal is unobservable at decision time, against both a frozen
   ablation and an adaptive bandit baseline, with a paired permutation test over eight
   seeds (Section~\ref{sec:learn}).
+  \item A single live run in which detection, resolution, and online learning operate
+  together on one topology across a drifting five-day schedule, detecting all twenty
+  injected faults, installing a valid recovery path each time, and adapting its path
+  preference as the network changes (Section~\ref{sec:e2e-full}).
 \end{itemize}
 
 \section{Related Work}
@@ -498,6 +506,55 @@ $4.0$ against $3.8$, with $p=0.547$ for the hypothesis that the baseline beats i
 The claim we make is the honest one. The controller adapts day by day as well as a
 purpose-built adaptive bandit, and it does so by updating an interpretable
 multi-objective policy rather than an opaque table of arm values.
+
+\subsection{Putting the loop together: one live run}
+\label{sec:e2e-full}
+The previous subsections isolate each stage so it can be measured against the right
+baseline. To show that they compose into a single self-healing controller rather than
+four separate experiments, we run the whole loop in one live process on the
+seven-switch mesh with background TCP and UDP traffic. A five-day schedule injects
+four faults per day, twenty in total, and the degradation drifts across survivors so
+that the currently best path changes over the run and cannot be read from telemetry
+at decision time. One shared path selector is carried through the run and re-fit by
+the learner at the end of each day. For every fault the controller detects the failure
+from OpenFlow port-status in about $0.25$~s, selects a survivor with the objective in
+Eq.~\eqref{eq:obj}, installs the flow rules, measures the resulting QoS with iperf and
+ping, stores the outcome, and updates its weights overnight.
+% [VERIFIED docs/s4_1_results.txt]
+
+\begin{table}[t]
+\caption{End-to-end run: one live process, 5 drifting days, 20 faults.
+% [VERIFIED docs/s4_1_results.txt]}
+\label{tab:e2e}
+\centering
+\footnotesize
+\begin{tabular}{lc}
+\toprule
+Outcome & Result \\
+\midrule
+Faults detected (port-status, $\sim$0.25~s) & $20/20$ \\
+Valid recovery path installed & $20/20$ \\
+Full reachability on a healthy-survivor choice & $15/15$ \\
+Reachability overall & $19/20$ \\
+Accepted learner updates & 3 \\
+Selector preference (day 0 $\rightarrow$ final) & C $\rightarrow$ B \\
+\bottomrule
+\end{tabular}\\[2pt]
+\footnotesize Day-mean recovery reward: $[18.7,\,17.4,\,10.1,\,-22.9,\,10.7]$.
+\end{table}
+
+The controller detects every fault and installs a valid recovery path on all twenty,
+and connectivity is complete whenever it selects a currently healthy survivor
+(Table~\ref{tab:e2e}). The single reachability blip is a case where, before adapting,
+the selector chose the survivor that was about to become lossy under load; a valid
+path was still installed, so this is a QoS and learning signal rather than a recovery
+failure. The day-mean reward tells the same story as the isolated learning study, now
+in one continuous run: recovery is strong while Path~C is healthy (days~0--1), drops
+sharply when the world flips and C turns lossy (day~3, $-22.9$), and returns to
+$+10.7$ on day~4 once the learner shifts the selector's preference from C to B and its
+weights move off the initial capacity-heavy setting. Detection, resolution, and online
+learning therefore operate together on the same live topology, which is the behaviour
+the paper sets out to demonstrate.
 
 \subsection{Ablation: does the reinforcement-learning agent help?}
 \label{sec:ablation}
