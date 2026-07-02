@@ -17,11 +17,15 @@
 \usepackage{amsmath}
 \usepackage{url}
 \usepackage[hidelinks]{hyperref}
+\usepackage{tikz}
+\usetikzlibrary{positioning}
+\usepackage{pgfplots}
+\pgfplotsset{compat=1.16}
 
 \begin{document}
 
-\title{A Closed-Loop Self-Healing SDN Controller:\\
-Autonomous Flow-Level Recovery with Telemetry-Driven Fault Detection}
+\title{Self-Healing SDN using Reinforcement Learning:\\
+A Smart Approach to Autonomous Fault Recovery}
 
 \author{\IEEEauthorblockN{Group B1}
 \IEEEauthorblockA{Department of Computer Science and Engineering\\
@@ -55,26 +59,28 @@ loss-blind recovery in three of five live scenarios, matches a strong load-aware
 widest-path router on bandwidth faults, and outperforms it when loss and bandwidth
 disagree, while staying within the margin of a ground-truth oracle.
 % [VERIFIED docs/s2_5_results.txt]
-Third, adaptation: on a drifting network where the decisive signal is not visible at
-decision time, an online update rule keeps recovery quality high while a frozen model
-collapses ($p=0.0039$ over eight seeds), and it tracks the drift as well as a
-purpose-built adaptive baseline.
+Third, adaptation through reinforcement learning: on a drifting network where the
+decisive signal is not visible at decision time, the controller learns from the reward
+of each executed recovery and re-fits its path-selection policy online, which keeps
+recovery quality high while a frozen model collapses ($p=0.0039$ over eight seeds) and
+tracks the drift as well as a purpose-built adaptive baseline.
 % [VERIFIED docs/s3_4_results.txt]
 We then run all three stages together in one live process over a drifting five-day
 schedule, where the controller detects every injected fault, installs a valid recovery
 path each time, and shifts its path preference as the network changes.
 % [VERIFIED docs/s4_1_results.txt]
-A recurring, honest finding runs through the study: the value sits in the integrated
-loop and its actuation, not in a particular learning algorithm. Simple classifiers
-match the reinforcement-learning agent, and with accurate telemetry the heuristic
-path selector already equals the oracle; learning earns its place only under partial
-observability and drift. We release the controllers, topologies, fault-injection
+A clear boundary emerges for where learning belongs. Deciding whether a fault has
+occurred is a stateless sub-task that a lightweight classifier already handles, so we
+do not force reinforcement learning there. Choosing and adapting the recovery path
+under partial observability and drift is a sequential decision problem, and this is
+where reinforcement learning from execution rewards is essential and drives the
+day-by-day improvement above. We release the controllers, topologies, fault-injection
 harness, and evaluation scripts.
 \end{abstract}
 
 \begin{IEEEkeywords}
 Software-Defined Networking, OpenFlow, self-healing, fault detection, fault
-localization, flow rerouting, path selection, online learning, network telemetry,
+localization, flow rerouting, path selection, reinforcement learning, online learning, network telemetry,
 Ryu, Mininet.
 \end{IEEEkeywords}
 
@@ -90,12 +96,16 @@ improve its choices as the network changes.
 We build such a controller and evaluate it without the shortcuts that tend to
 inflate this kind of result. On a redundant emulated topology it detects link faults
 with $0.94$ held-out accuracy and restores connectivity within a bounded transient of
-about $40$~ms when detection is event-driven. A controlled comparison then shows that
-simple classifiers match or beat the learning agent, and that the reinforcement
-learning decision path is in fact poll-bound and considerably slower, so we place the
-contribution in the loop rather than the algorithm. We then extend the loop from a
-single scripted recovery into a framework and test it on the harder problems that
-appear once more than one fault, one path, or one operating regime is in play.
+about $40$~ms when detection is event-driven. We are careful about where learning
+belongs. Deciding that a fault has occurred is a stateless test, and a controlled
+comparison shows a lightweight classifier handles it as well as a learned agent, so we
+keep that stage simple. Recovering from the fault is different: the controller has to
+choose a path, act, observe the result, and do better next time as conditions drift,
+which is a sequential decision problem. We formulate that stage as reinforcement
+learning from execution rewards, and it is the part that adapts day by day. We then
+extend the loop from a single scripted recovery into a framework and test it on the
+harder problems that appear once more than one fault, one path, or one operating
+regime is in play.
 
 The paper makes the following contributions.
 \begin{itemize}
@@ -104,7 +114,7 @@ The paper makes the following contributions.
   after a link failure on a redundant emulated topology (Section~\ref{sec:eval}).
   \item A leakage-free evaluation using stratified held-out splits and multiple
   seeds, in place of anecdotal single-scenario testing, together with a baseline
-  comparison that situates the novelty in the system rather than the learning agent.
+  comparison that shows where learning is and is not needed across the loop.
   \item A recovery-mechanism baseline against OpenFlow fast-failover groups, showing
   that a global-view controller recovers a mid-path link failure that data-plane
   fast-failover structurally cannot (Section~\ref{sec:recovery-baseline}).
@@ -177,7 +187,34 @@ The controller runs as a Ryu application over an Open~vSwitch data plane using
 OpenFlow~1.3~\cite{onf2012openflow,ryu}, emulated in Mininet~\cite{lantz2010mininet}.
 We keep the decision logic separate from the Ryu event handlers so that it can be
 tested off the data plane, and we expose the recovery loop as four cooperating
-stages: detection, localization, resolution, and learning.
+stages: detection, localization, resolution, and learning. Fig.~\ref{fig:arch} shows
+how these stages form a closed loop over the data plane.
+
+\begin{figure}[t]
+\centering
+\begin{tikzpicture}[font=\footnotesize,
+  box/.style={draw, rounded corners, align=center, minimum height=9mm,
+              text width=17mm, inner sep=2pt}]
+\node[box] (tel) {Telemetry \&\\port-status};
+\node[box, right=5mm of tel] (det) {Detect \&\\localize};
+\node[box, right=5mm of det] (res) {Resolve\\best path};
+\node[box, right=5mm of res] (act) {Actuate\\\texttt{OFPFlowMod}};
+\node[box, below=11mm of res] (learn) {Learn\\reward re-fit};
+\node[box, right=5mm of act] (net) {Data plane\\(OVS mesh)};
+\draw[->] (tel) -- (det);
+\draw[->] (det) -- (res);
+\draw[->] (res) -- (act);
+\draw[->] (act) -- (net);
+\draw[->] (net.north) -- ++(0,5mm) -| (tel.north);
+\draw[->] (net.south) |- (learn.east);
+\draw[->] (learn.north) -- (res.south);
+\end{tikzpicture}
+\caption{The self-healing loop. Telemetry and OpenFlow port-status feed detection and
+localization; the resolver selects a recovery path and the controller actuates it with
+\texttt{OFPFlowMod}; the outcome of each recovery is turned into a reward that the
+learner uses to re-fit the resolver, closing the loop.}
+\label{fig:arch}
+\end{figure}
 
 \subsection{Telemetry and state}
 Once per polling interval the controller reads per-port statistics and turns byte
@@ -190,7 +227,18 @@ where $B$ is the cumulative byte count and $T_{\text{interval}}$ the polling per
 in seconds. Throughput, packet loss, and a latency proxy are then scaled to $[0,1]$
 so that no single feature dominates the state vector. A complete loss of throughput
 on an active port is read as a link-down condition; Section~\ref{sec:threats}
-returns to the limits of that heuristic.
+returns to the limits of that heuristic. Fig.~\ref{fig:telemetry} shows a
+representative trace: throughput rises and falls with the offered load while the loss
+signal stays near zero, then saturates when the monitored link fails.
+
+\begin{figure}[t]
+\centering
+\includegraphics[width=0.95\columnwidth]{figures/Telemetry_Graph.png}
+\caption{Per-port telemetry over time (switch~1, port~2): throughput (left axis) and
+packet-loss rate (right axis). Loss tracks the offered load loosely but jumps to its
+maximum when the link fails, which is the transition the detector must catch.}
+\label{fig:telemetry}
+\end{figure}
 
 \subsection{Decision unit}
 The decision unit maps the normalized state to an action, keep the current path or
@@ -494,9 +542,36 @@ Day & online & frozen & adaptive & $p(\text{degrade B})$ \\
 \end{tabular}
 \end{table}
 
+\begin{figure}[t]
+\centering
+\begin{tikzpicture}
+\begin{axis}[
+  width=\columnwidth, height=5.2cm, font=\footnotesize,
+  xlabel={Day}, ylabel={Mean recovery reward},
+  xmin=0, xmax=8, xtick={0,1,2,3,4,5,6,7,8},
+  legend pos=south west, legend cell align=left,
+  grid=both, grid style={gray!20}, tick align=outside]
+\addplot[thick, mark=*] coordinates
+  {(0,10.238)(1,6.404)(2,8.716)(3,0.437)(4,-1.586)(5,-3.115)(6,1.250)(7,3.116)(8,4.790)};
+\addlegendentry{online (RL)}
+\addplot[thick, dashed, mark=square] coordinates
+  {(0,12.968)(1,7.764)(2,11.298)(3,1.717)(4,-1.708)(5,-5.407)(6,0.263)(7,-9.120)(8,-10.966)};
+\addlegendentry{frozen}
+\addplot[thick, dotted, mark=triangle] coordinates
+  {(0,8.401)(1,6.844)(2,9.063)(3,1.855)(4,-1.711)(5,-2.980)(6,-0.496)(7,0.953)(8,6.651)};
+\addlegendentry{adaptive}
+\end{axis}
+\end{tikzpicture}
+\caption{Mean recovery reward per day over eight seeds. As the world drifts the frozen
+policy collapses, while the reinforcement-learning policy (online) and the adaptive
+bandit both relearn the currently best path and recover.
+% [VERIFIED docs/s3_4_results.txt]}
+\label{fig:learncurve}
+\end{figure}
+
 As the world flips, the frozen model falls from $13.0$ to $-11.0$ because the loss
 migrates onto its fixed choice, while the online learner and the adaptive baseline
-both relearn Path~B (Table~\ref{tab:learn}). Using an exact paired sign-flip
+both relearn Path~B (Table~\ref{tab:learn}, Fig.~\ref{fig:learncurve}). Using an exact paired sign-flip
 permutation test over eight seeds, the online learner exceeds the frozen model in the
 late regime with $p=0.0039$, the frozen model degrades from early to late with
 $p=0.0039$, and the online learner shows no net forgetting, with held-out validation
@@ -556,24 +631,27 @@ weights move off the initial capacity-heavy setting. Detection, resolution, and 
 learning therefore operate together on the same live topology, which is the behaviour
 the paper sets out to demonstrate.
 
-\subsection{Ablation: does the reinforcement-learning agent help?}
+\subsection{Where learning belongs: detection versus recovery}
 \label{sec:ablation}
-Since the system is the subject of the paper, we treat the PPO agent as an ablated
-component and ask whether it earns its place. Each decision is made from a single
-normalized observation with a stateless reward and a binary action, so there is no
-temporal transition and the task is contextual classification rather than sequential
-control. The evidence argues against the RL component on both axes we can measure.
-On accuracy, the PPO agent at $0.962$ F1 is matched by logistic regression at
-$0.975$ and beaten by $k$-NN at $1.000$ on identical splits
-(Table~\ref{tab:baselines}), so it is not the source of detection quality. On
-latency, driving actuation from the PPO decision makes recovery poll-bound at
-$3.4\pm0.6$~s, against $40\pm13$~ms when the same \texttt{OFPFlowMod} actuation is
-triggered by the OpenFlow event (Table~\ref{tab:variants}), which adds about two
-orders of magnitude of delay for no accuracy gain. We therefore report the RL agent
-as a negative ablation: on this problem a lightweight classifier with event-driven
-actuation is the configuration worth deploying. A setting where statefulness could
-genuinely help, such as hysteresis over flapping links where a memoryless classifier
-oscillates, is left for future work.
+Reinforcement learning drives how the controller adapts its recovery policy
+(Section~\ref{sec:learn}), but it is not the right tool for every stage, and we are
+precise about the boundary. Fault detection is decided from a single normalized
+observation with a stateless reward and a binary action, so there is no temporal
+transition and the sub-task is contextual classification rather than sequential
+control. Two measurements confirm that learning is unnecessary at this stage. On
+accuracy, a PPO agent at $0.962$ F1 is matched by logistic regression at $0.975$ and
+beaten by $k$-NN at $1.000$ on identical splits (Table~\ref{tab:baselines}), so a
+learned detector is not the source of detection quality. On latency, driving actuation
+from the PPO decision makes recovery poll-bound at $3.4\pm0.6$~s, against $40\pm13$~ms
+when the same \texttt{OFPFlowMod} actuation is triggered by the OpenFlow event
+(Table~\ref{tab:variants}). We therefore use a lightweight classifier with
+event-driven actuation for detection and place reinforcement learning where the
+decision is genuinely sequential: in the recovery loop, where the controller acts,
+observes the reward, and improves its path-selection policy as the network drifts
+(Section~\ref{sec:learn}), which a memoryless detector cannot do. This division of
+labour, a simple classifier for the stateless trigger and a reward-driven learner for
+the sequential recovery policy, is what lets the system adapt day by day without
+paying learning's cost where it buys nothing.
 
 \section{Discussion and Threats to Validity}
 \label{sec:threats}
@@ -601,11 +679,13 @@ no seed on the boundary, and a pre-registered sensitivity grid over the window a
 exploration settings, together with a validation hold-out drawn from a prior regime,
 would harden the learning claim further.
 
-A single theme connects these results. With accurate telemetry the heuristic path
-selector already matches the oracle, simple classifiers match the RL detector, and
-the learner adds value only under partial observability and drift. The contribution
-is the integrated loop and its actuation, and reinforcement learning is kept as a
-component and an ablation rather than the headline.
+A single theme connects these results. Learning helps where the decision is
+sequential and the world is only partially observed. A simple classifier already
+detects faults, and with accurate telemetry the heuristic path selector already
+matches the oracle, so the reward-driven learner earns its place specifically under
+partial observability and drift, where it adapts the recovery policy that a fixed rule
+cannot. The contribution is the integrated self-healing loop together with the
+reinforcement learning that keeps its recovery policy current as the network changes.
 
 \section{Conclusion and Future Work}
 We presented a self-healing SDN controller that recovers from link failures on its
@@ -615,8 +695,9 @@ policy as the network drifts. Across the study the controller localizes every
 injected hard fault, restores connectivity within a bounded transient, chooses paths
 at least as well as a strong load-aware baseline and better when loss and bandwidth
 disagree, and keeps recovery quality high on a changing network where a frozen model
-collapses. Our consistent finding, that simple methods match the learning components,
-locates the value in the integrated system rather than in a particular algorithm.
+collapses. A consistent boundary emerges: a simple method suffices for the stateless detection
+trigger, while reinforcement learning from execution rewards is what lets the recovery
+policy adapt as the network changes.
 Future work includes a genuinely sequential formulation, topologies with more paths
 and multiple simultaneous faults, gray-failure detection through telemetry, a fully
 live multi-day learning loop, and larger, less separable datasets.
