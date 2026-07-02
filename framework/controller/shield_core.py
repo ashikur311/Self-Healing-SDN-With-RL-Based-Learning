@@ -37,9 +37,12 @@ PRIO_BACKUP = 100
 
 
 class ShieldCore:
-    def __init__(self, topo=None, src_host='h1', dst_host='h2', weights=None, k=3):
+    def __init__(self, topo=None, src_host='h1', dst_host='h2', weights=None, k=3,
+                 resolver=None):
         self.topo = topo or TopologyGraph()
-        self.resolver = Resolver(weights)
+        # A shared Resolver may be passed in (e.g. one the S3.2 Learner keeps updating
+        # across an end-to-end run); otherwise build a fresh one from `weights`.
+        self.resolver = resolver or Resolver(weights)
         self.src_host, self.dst_host = src_host, dst_host
         self.src_sw = HOST_ATTACH[src_host][0]
         self.dst_sw = HOST_ATTACH[dst_host][0]

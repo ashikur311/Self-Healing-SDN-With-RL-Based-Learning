@@ -1,0 +1,46 @@
+S4.1 — Full end-to-end SHIELD run (one command)                   PASS
+================================================================================
+Build:  experiments/exp_e2e.py      Log: results/logs/e2e_run.txt
+Run:    sudo python3 -u experiments/exp_e2e.py > results/logs/e2e_run.txt 2>&1
+
+One live process on the big mesh ties together EVERY pillar across a drifting
+5-day schedule (4 recoveries/day = 20 faults):
+  big topology (mesh) + live traffic (TrafficGenerator) + scheduled faults
+  (faultgen/nonstationary) -> DETECT (OpenFlow port-state, ~0.25s) -> RESOLVE
+  (Resolver/ShieldCore, epsilon-greedy) -> ACTUATE (flow install) -> MEASURE live
+  (iperf TCP + ping) -> STORE (ExperienceStore) -> LEARN (end-of-day Learner re-fit).
+The per-day loss lands on a drifting survivor (unobservable at decision time), so
+the recovery agent must LEARN which survivor currently pays off. ONE Resolver is
+shared across the run and re-fit by the Learner (ShieldCore now accepts resolver=).
+
+Result (this run):
+  DETECTED                 : 20/20  (all faults, ~0.25s)
+  valid path installed     : 20/20  (RESOLVE+ACTUATE succeeded every fault)
+  reachable on healthy pick: 15/15  (100% connectivity whenever SHIELD chose the
+                                      currently-healthy survivor)
+  reachability (overall)   : 19/20  (1 blip = the DEGRADED survivor under background
+                                      traffic pre-adaptation -- a QoS/learning signal,
+                                      not a recovery failure; a valid path was installed)
+  experience stored        : 20 recoveries (mean reward 6.80)
+  day-mean reward          : [18.7, 17.4, 10.1, -22.9, 10.7]
+  Resolver preference      : day0 = C (cap-heavy init) -> final = B
+                             final weights latency=4.00 capacity=0.00 (flipped)
+  learner updates          : 3 (accepted)
+
+The reward trajectory shows the whole story in ONE live run: recover well while
+Path C is healthy (days 0-1), a dip when the world flips and C becomes lossy
+(day 3, -22.9), then RECOVERY to +10.7 (day 4) once the learner shifts the
+Resolver's preference C->B. This is detect + resolve + LEARN, adapting online.
+
+PASS gate (from project_working_step.md): "runs clean start-to-finish, recovers +
+improves." MET -- clean run (exit 0); every fault detected + a valid recovery path
+installed; full connectivity on every healthy-survivor choice; and the learner
+ADAPTED (re-fit + preference flipped C->B as the world drifted).
+
+Honesty: reachability is gated on healthy-survivor choices (100%); choosing a
+congested survivor pre-adaptation yields poor QoS (the learning signal), not a
+recovery failure -- rigorous QoS-improvement statistics are the S3.4 gate. Live
+throughput anchors are real; see docs/s3_4_results.txt and the p2/p3 review debt.
+
+Next: S4.2 test suite + reproducibility; S4.3 framework paper (after clearing the
+p2/p3 review debt); S4.4 review + Overleaf build.

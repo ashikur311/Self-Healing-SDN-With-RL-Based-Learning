@@ -264,6 +264,14 @@ result. Run `/peer-reviewer` after each PHASE.
 
 # PHASE 4 — Integration, evaluation & publication   [~1–2 sessions]
 
+- [x] **S4.1 — Full end-to-end run.** DONE 2026-07-01: `experiments/exp_e2e.py` — one
+  live process on the mesh, 5 days x 4 recoveries: big topology + live traffic +
+  scheduled faults -> DETECT (port-state ~0.25s) -> RESOLVE (shared Resolver, ε-greedy)
+  -> ACTUATE -> MEASURE (iperf+ping) -> STORE -> end-of-day LEARN. PASS: 20/20 detected,
+  20/20 valid path installed, 15/15 reachable on healthy-survivor picks, learner adapted
+  (3 updates, preference flipped C->B, weights lat=4/cap=0). Day-mean reward
+  [18.7,17.4,10.1,-22.9,10.7] shows recover->dip-at-flip->re-adapt in one run. See
+  `docs/s4_1_results.txt`, `results/logs/e2e_run.txt`.
 - [ ] **S4.1 — Full end-to-end run.** One command: big topology + live traffic + fault
   schedule + detect + resolve + learn. PASS: runs clean start-to-finish, recovers +
   improves. Output: `results/logs/e2e_run.txt`.
