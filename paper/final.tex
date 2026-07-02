@@ -480,7 +480,7 @@ $\text{tput}-0.05\,\text{lat}-0.2\,\text{loss}$.
 % [VERIFIED docs/s2_5_results.txt]
 
 \begin{table}[t]
-\caption{Composite QoS by strategy, 5 scenarios $\times$ 5 seeds (mean).}
+\caption{Composite QoS by strategy, 5 scenarios $\times$ 8 seeds (mean).}
 \label{tab:resolve}
 \centering
 \footnotesize
@@ -488,11 +488,11 @@ $\text{tput}-0.05\,\text{lat}-0.2\,\text{loss}$.
 \toprule
 Scenario & fixed & short & widest & rand & \textbf{ours} & oracle \\
 \midrule
-congest\_B      & $-0.2$ & $-0.2$ & $12.0$ & $2.2$  & $\mathbf{12.0}$ & $12.0$ \\
-loss\_B         & $-4.0$ & $-4.0$ & $12.4$ & $-0.1$ & $\mathbf{12.4}$ & $12.4$ \\
-congest\_loss\_B& $-6.9$ & $-6.9$ & $12.2$ & $-4.5$ & $\mathbf{12.2}$ & $12.2$ \\
-congest\_C\_ctrl& $7.7$  & $7.7$  & $7.7$  & $5.3$  & $\mathbf{7.7}$  & $7.7$  \\
-loss\_C\_fat    & $7.1$  & $7.1$  & $-11.7$& $4.0$  & $\mathbf{7.1}$  & $7.1$  \\
+congest\_B      & $-0.1$ & $-0.1$ & $12.7$ & $4.3$  & $\mathbf{12.7}$ & $12.7$ \\
+loss\_B         & $-4.8$ & $-4.8$ & $8.4$  & $0.2$  & $\mathbf{8.4}$  & $8.4$  \\
+congest\_loss\_B& $-5.2$ & $-5.2$ & $9.6$  & $0.6$  & $\mathbf{9.6}$  & $9.6$  \\
+congest\_C\_ctrl& $5.4$  & $5.4$  & $5.4$  & $-0.4$ & $\mathbf{5.4}$  & $5.4$  \\
+loss\_C\_fat    & $6.1$  & $6.1$  & $-13.2$& $-2.4$ & $\mathbf{6.1}$  & $6.1$  \\
 \bottomrule
 \end{tabular}
 \end{table}
@@ -500,9 +500,10 @@ loss\_C\_fat    & $7.1$  & $7.1$  & $-11.7$& $4.0$  & $\mathbf{7.1}$  & $7.1$  \
 The selector beats the loss-blind baselines in three of five scenarios, is never
 materially worse than widest-path, and clearly beats it in \texttt{loss\_C\_fat},
 where the loss sits on the high-capacity path so a bandwidth-only router picks the
-worst survivor ($7.1$ against $-11.7$). It matches the oracle in every scenario
-despite seeing only noisy loss, because the observed loss gaps of $15$ to $20$ points
-are well outside the noise. The reading we defend is deliberately modest. On
+worst survivor. Over eight seeds this margin is large relative to its spread,
+$6.1\pm3.6$ for our selector against $-13.2\pm4.5$ for widest-path. The selector
+matches the oracle in every scenario despite seeing only noisy loss, because the
+observed loss gaps of $16$ to $33$ points are well outside the noise. The reading we defend is deliberately modest. On
 pure-bandwidth faults, load-awareness alone is enough and the selector only ties
 widest-path; the multi-objective, loss-aware policy earns its place when loss and
 bandwidth point in different directions, as they do in a gray failure on a fast link.

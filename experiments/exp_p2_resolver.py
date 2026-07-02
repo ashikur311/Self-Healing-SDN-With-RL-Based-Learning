@@ -57,7 +57,7 @@ from baselines.random_path import RandomPath                         # noqa: E40
 from baselines.widest_path import WidestPath                         # noqa: E402
 from baselines.oracle_path import OraclePath                         # noqa: E402
 
-SEEDS = 5
+SEEDS = 8                       # p2 review M4: match the learner's 8-seed rigor
 IPERF_DUR = 5
 # Recovery objective: prioritise goodput (capacity, low loss) over raw latency.
 WEIGHTS = {'latency': 0.5, 'capacity': 1.0, 'loss': 1.5, 'hops': 0.1}

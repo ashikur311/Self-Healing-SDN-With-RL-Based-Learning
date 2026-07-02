@@ -28,28 +28,29 @@ HARDENING (answers the peer review):
   * M3 -- the oracle is no longer a copy of SHIELD: SHIELD sees loss with per-seed
     noise, the oracle sees ground truth. "Within 10% of oracle" now means something.
 
-Scenarios (5), >=5 seeds; primary A failed, survivors B & C measured live:
+Scenarios (5), 8 seeds (p2 review M4: was 5 -> matches the S3.4 learner's 8-seed
+rigor); primary A failed, survivors B & C measured live. Re-run 2026-07-02:
   scenario         B (tput/loss)     C (tput/loss)    best
-  congest_B        2.7Mb/0%          16.0Mb/0%        C
-  loss_B           2.5Mb/16%         16.3Mb/0%        C
-  congest_loss_B   0.6Mb/16%         17.5Mb/0%        C
-  congest_C_ctrl   10.5Mb/0%         0.3Mb/0%         B  (control)
-  loss_C_fat       10.2Mb/0%         0.0Mb/16%        B  (loss on fat path)
+  congest_B        2.7Mb/0%          17.6Mb/0%        C
+  loss_B           2.1Mb/16%         12.8Mb/0%        C
+  congest_loss_B   0.3Mb/16%         15.2Mb/0%        C
+  congest_C_ctrl   8.9Mb/0%          0.1Mb/33%        B  (control)
+  loss_C_fat       9.5Mb/0%          0.0Mb/33%        B  (loss on fat path)
 
-Composite QoS = tput - 0.05*lat - 0.2*loss  (mean±std over 5 seeds):
-  scenario        fixed  short  widest  random  SHIELD  oracle
-  congest_B       -0.2   -0.2   12.0    2.2     12.0    12.0
-  loss_B          -4.0   -4.0   12.4   -0.1     12.4    12.4
-  congest_loss_B  -6.9   -6.9   12.2   -4.5     12.2    12.2
-  congest_C_ctrl   7.7    7.7    7.7    5.3      7.7     7.7
-  loss_C_fat       7.1    7.1  -11.7    4.0      7.1     7.1
+Composite QoS = tput - 0.05*lat - 0.2*loss  (mean±std over 8 seeds):
+  scenario        fixed       short       widest      random      SHIELD      oracle
+  congest_B       -0.1±0.9    -0.1±0.9    12.7±1.3    4.3±5.9     12.7±1.3    12.7±1.3
+  loss_B          -4.8±5.1    -4.8±5.1     8.4±6.5    0.2±8.8      8.4±6.5     8.4±6.5
+  congest_loss_B  -5.2±3.8    -5.2±3.8     9.6±3.2    0.6±8.8      9.6±3.2     9.6±3.2
+  congest_C_ctrl   5.4±1.3     5.4±1.3     5.4±1.3   -0.4±7.7      5.4±1.3     5.4±1.3
+  loss_C_fat       6.1±3.6     6.1±3.6   -13.2±4.5   -2.4±10.6     6.1±3.6     6.1±3.6
 
 Verdict (hardened gate):
   * beats loss-blind baselines (fixed AND shortest): 3/5 scenarios  (need >=3)  OK
   * never materially worse than widest_path: True; strictly beats widest_path: 1/5
-    (loss_C_fat: SHIELD 7.1 vs widest -11.7)  (need >=1)  OK
+    (loss_C_fat: SHIELD 6.1±3.6 vs widest -13.2±4.5 -- gap large vs spread)  (need >=1)  OK
   * within ~10% of the GROUND-TRUTH oracle while SHIELD sees only NOISY loss: True  OK
-  *** S2.5 GATE (hardened): PASS
+  *** S2.5 GATE (hardened): PASS (8 seeds; verdict pattern identical to the 5-seed run)
 
 Interpretation / honesty (the defensible paper claim):
   * Against loss-blind conventional recovery (fixed-failover, shortest-path) SHIELD
