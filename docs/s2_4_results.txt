@@ -1,0 +1,40 @@
+S2.4 — Closed-loop recovery (telemetry->detect->resolve->actuate)  PASS
+================================================================================
+Build:
+  framework/controller/shield_core.py  — Ryu-free DECISION brain shared by the
+    production controller and the integration test. Holds TopologyGraph + Resolver;
+    picks the PRIMARY path (Resolver best on healthy graph); mark_down/mark_up track
+    failures; plan_recovery() re-resolves and returns an actuation delta:
+      reroute  (install best surviving path @PRIO_BACKUP=100, overrides primary), or
+      failback (delete backup flows so PRIMARY @PRIO_PRIMARY=10 resumes), or None.
+  framework/controller/shield_app.py    — production Ryu app: the event shell +
+    OFPFlowMod actuator around ShieldCore. Port-stats telemetry (TelemetryCollector),
+    port-status localization (FaultLocalizer) -> ShieldCore -> OFPFlowMod install/
+    delete; proactively installs the primary path per-switch on connect.
+    Run: ryu-manager framework/controller/shield_app.py  +  sudo python3 topologies/mesh.py
+
+Test (unit):  tests/test_shield_core.py -> "S2.4-core PASS"
+  primary=A; reroute A->B on s1-s2 fault; failback B->A on heal (delete == prior
+  install); node isolation reroutes off s2; idempotent no-op when unchanged.
+
+Test (integration, LIVE):  experiments/exp_p2_recovery.py -> "S2.4 GATE ... PASS"
+  Single-process on mesh.py (fail-secure; SHIELD installs all flows via ovs-ofctl,
+  the same ShieldCore brain the Ryu app runs, only the actuator differs). Detection
+  uses the SAME OF port-state signal shield_app consumes as an event.
+  results/logs/s2_4_recovery.log:
+    primary=s1->s2->s6 installed; baseline ping loss 0%.
+    scenario "primary link s1-s2 down": detected 0.25s -> reroute to s1->s3->s4->s6
+       -> post-recovery ping loss 0% -> heal -> failback to A -> ping loss 0%.
+    scenario "node s2 isolated" (s1-s2 + s2-s6 down): detected 0.27s -> reroute to
+       s1->s3->s4->s6 (avoids s2) -> ping loss 0% -> heal -> failback -> ping loss 0%.
+
+PASS gate (from project_working_step.md): "on mesh.py, inject a fault -> auto-detect
+-> resolve -> recover; pingall recovers. PASS: automatic recovery on the big
+topology."  MET — both scenarios recover to 0% loss and fail back.
+
+Regression: S2.1 + S2.2 + S2.3 + S2.4-core unit tests all green.
+
+Next: S2.5 — experiments/exp_p2_resolver.py: inject faults under >=4 varying link
+conditions; measure post-recovery QoS (throughput/loss/latency) for fixed-failover
+/shortest/random/Resolver/oracle; >=5 seeds. GATE: Resolver beats fixed-failover AND
+shortest-path on composite QoS in >=3 of >=4 scenarios, within ~10% of oracle.

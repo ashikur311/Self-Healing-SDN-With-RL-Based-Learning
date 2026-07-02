@@ -165,7 +165,15 @@ result. Run `/peer-reviewer` after each PHASE.
     (oracle = best path with full knowledge = upper bound).
   - Test: each returns a valid path.
 
-- [ ] **S2.4 — Wire the closed loop.**
+- [x] **S2.4 — Wire the closed loop.** DONE 2026-07-01: `framework/controller/
+    shield_core.py` (Ryu-free brain: TopologyGraph+Resolver, mark_down/up,
+    plan_recovery -> reroute/failback deltas) + `shield_app.py` (Ryu event shell +
+    OFPFlowMod actuator around ShieldCore). Unit test `tests/test_shield_core.py`
+    -> "S2.4-core PASS". LIVE integration `experiments/exp_p2_recovery.py` on mesh.py
+    (single-process, ovs-ofctl actuation, same brain): baseline 0% -> s1-s2 fault
+    detected 0.25s -> reroute A->B -> 0% loss -> heal -> failback A -> 0%; node-s2
+    isolation likewise recovers. "S2.4 GATE ... PASS". See `docs/s2_4_results.txt`,
+    `results/logs/s2_4_recovery.log`.
   - Build: `framework/controller/shield_app.py` — Ryu app: telemetry → detector →
     resolver → actuator, with failback on link-up.
   - Test (integration): on `mesh.py`, inject a fault → auto-detect → resolve →
@@ -248,7 +256,7 @@ curve) is what makes it *novel*.
 |-------|------|--------|
 | 0 Foundation | S0.1–S0.4 | TODO |
 | 1 Detect@scale | S1.1–S1.7 | TODO (reuse existing telemetry/eval) |
-| 2 Resolver | S2.1–S2.6 | IN PROGRESS (S2.1–S2.3 done) |
+| 2 Resolver | S2.1–S2.6 | IN PROGRESS (S2.1–S2.4 done) |
 | 3 Learner | S3.1–S3.4 | TODO |
 | 4 Publish | S4.1–S4.4 | TODO |
 
