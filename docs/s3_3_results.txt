@@ -1,0 +1,45 @@
+S3.3 — Non-stationary schedule (something to adapt to)            PASS
+================================================================================
+Build:
+  topologies/nonstationary.py  — `NonStationarySchedule(n_days, seed)`, Mininet-free
+    + deterministic. Three things drift across D days (t = day/(D-1)):
+      1. WHICH survivor is degraded after the primary (A) fails:
+         p(degrade B) 0.9 -> 0.1, so early days -> Path C is best, late days -> Path B
+         is best. A model frozen on "prefer C" must un-learn and re-learn.
+      2. FAULT-TYPE mix: link 0.8->0.3, node 0.1->0.3, flap 0.1->0.4 (churn rises).
+      3. Traffic INTENSITY: rate_choices grow (top burst rate ~4 -> ~10 Mbit).
+    API: day_profile(day), distribution(day), sample_scenario(day, rep) (reproducible
+    in (seed,day,rep)), optimal_survivor(scenario), build_overrides(scenario) (TCLink
+    bw/loss for the degraded survivor, as in S2.5), log_schedule(path).
+  topologies/traffic.py  — start_mix(dur, n_bursts, rate_choices=None): the schedule
+    shifts per-day traffic intensity; default [2,4,6,8] keeps prior behaviour.
+  topologies/faultgen.py — FaultInjector.inject_scenario(scenario): fails the primary
+    per the day's drifting fault TYPE (link -> link_down, node -> switch_down(s2),
+    flap -> flap then leave down); the survivor degradation itself is applied at
+    build time via build_overrides.
+
+Why: the learner (S3.2) only matters if the world drifts; a stationary world is
+solved by a frozen model. This makes the OPTIMAL recovery path change over time and
+supplies the exploratory, drifting experience the bandit learner needs -- the premise
+of the S3.4 learning curve (SHIELD-online vs a frozen model).
+
+Test:   tests/test_nonstationary.py  ->  "S3.3 PASS"
+  [1] p(degrade B) monotonically 0.9->0.1; fault-type mix drifts (link down, flap up);
+      traffic ramps; distribution(day0) != distribution(dayN).
+  [2] Optimal survivor flips over the horizon: P(best=C) >0.8 on day0, <0.2 on dayN.
+  [3] sample_scenario reproducible in (seed,day,rep); empirical p(degrade B) tracks
+      the profile within 0.1; scenario fields well-formed.
+  [4] log_schedule writes per-day distributions that differ day-to-day
+      (results/logs/nonstationary_schedule.json).
+  [5] Integration hooks present: traffic.start_mix(rate_choices=...) +
+      faultgen.inject_scenario.
+
+Regression: S2.1-S2.4 + S3.1-S3.3 offline unit tests all green.
+
+PASS gate (from project_working_step.md): "distribution differs day-to-day (logged)."
+MET — [1]+[4]; plus [2] shows the drift is decision-relevant (optimal path flips).
+
+Next: S3.4 — learning-curve experiment (PHASE-3 GATE, the NOVELTY):
+experiments/exp_p3_online.py — run D days; plot recovery-QoS vs day for SHIELD-online
+vs a frozen model; >=5 seeds; track validation each day. PASS: significant
+improvement day 1->D (p<0.05), frozen stays flat, validation non-decreasing.

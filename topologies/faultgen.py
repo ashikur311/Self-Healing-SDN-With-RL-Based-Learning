@@ -158,6 +158,27 @@ class FaultInjector:
                       if k not in ('t', 'type', 'target')}
             method(ev.get('target'), **kwargs)
 
+    def inject_scenario(self, scenario):
+        """Non-stationary S3.3: fail the primary path per a day's sampled scenario.
+
+        The scenario (from topologies.nonstationary.sample_scenario) carries a
+        drifting FAULT TYPE -- so the fault distribution SHIFTS across days:
+          'link' -> down the primary link,
+          'node' -> isolate the primary's mid switch (kills Path A too),
+          'flap' -> flap the primary link a few cycles then leave it down.
+        The degraded-survivor condition itself is applied at build time
+        (scenario['bottleneck']/bw/loss); this only injects the primary failure."""
+        a, b = scenario['primary_fault']
+        ftype = scenario.get('fault_type', 'link')
+        lbl = 'day%s:%s' % (scenario.get('day', '?'), ftype)
+        if ftype == 'node':
+            return self.switch_down(b, label=lbl)          # isolate s2 -> Path A dead
+        if ftype == 'flap':
+            self.flap([a, b], cycles=scenario.get('cycles', 2),
+                      period=scenario.get('period', 1), label=lbl)
+            return self.link_down([a, b], label=lbl)        # leave it down after flapping
+        return self.link_down([a, b], label=lbl)
+
 
 def load_schedule(path):
     with open(path) as f:

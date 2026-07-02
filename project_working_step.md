@@ -232,7 +232,13 @@ result. Run `/peer-reviewer` after each PHASE.
     to detect catastrophic forgetting.
   - Test: model params change after an update; validation score computed.
 
-- [ ] **S3.3 — Non-stationary schedule.**
+- [x] **S3.3 — Non-stationary schedule.** DONE 2026-07-01: `topologies/nonstationary.py`
+    (`NonStationarySchedule`, Mininet-free) drifts 3 things across D days — which
+    survivor is degraded (p(deg B) 0.9->0.1, so optimal path flips C->B), fault-type mix
+    (link->flap/node), traffic intensity (rate_choices grow). Hooks: `traffic.start_mix(
+    rate_choices=)` + `faultgen.inject_scenario()`. Unit test `tests/test_nonstationary.py`
+    -> "S3.3 PASS": drift monotone + differs day0/dayN, optimal survivor flips, sampling
+    calibrated, schedule logged. See `docs/s3_3_results.txt`.
   - Build: in `faultgen.py`/`traffic.py`, shift the fault/traffic distribution across
     "days" so there is genuinely something to adapt to.
   - Test: distribution differs day-to-day (logged).
@@ -279,7 +285,7 @@ curve) is what makes it *novel*.
 | 0 Foundation | S0.1–S0.4 | TODO |
 | 1 Detect@scale | S1.1–S1.7 | TODO (reuse existing telemetry/eval) |
 | 2 Resolver | S2.1–S2.6 | GATE PASS (S2.1–S2.5 done; S2.6 optional) |
-| 3 Learner | S3.1–S3.4 | IN PROGRESS (S3.1, S3.2 done) |
+| 3 Learner | S3.1–S3.4 | IN PROGRESS (S3.1–S3.3 done) |
 | 4 Publish | S4.1–S4.4 | TODO |
 
 ## What already exists to reuse (don't rebuild)

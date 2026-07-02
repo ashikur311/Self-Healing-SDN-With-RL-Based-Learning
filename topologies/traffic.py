@@ -63,8 +63,12 @@ class TrafficGenerator:
                             'proto': 'udp' if udp else 'tcp',
                             'rate': rate, 'dur': dur, 'start': start})
 
-    def start_mix(self, dur=30, n_bursts=6):
-        """Persistent background flows + randomized foreground bursts over `dur`."""
+    def start_mix(self, dur=30, n_bursts=6, rate_choices=None):
+        """Persistent background flows + randomized foreground bursts over `dur`.
+
+        `rate_choices` (list of Mbit ints) lets the non-stationary schedule (S3.3)
+        shift traffic intensity per "day"; defaults to the stationary [2,4,6,8]."""
+        rate_choices = rate_choices or [2, 4, 6, 8]
         # -- background (persistent, both directions) --
         self.flow('h1', 'h2', port=5101, udp=False, dur=dur, start=0)          # TCP fwd
         self.flow('h2', 'h1', port=5102, udp=True, rate='1M', dur=dur, start=0)  # UDP rev
@@ -75,7 +79,7 @@ class TrafficGenerator:
             blen = self.rng.randint(3, 6)
             udp = self.rng.random() < 0.6
             src, dst = ('h1', 'h2') if self.rng.random() < 0.5 else ('h2', 'h1')
-            rate = '%dM' % self.rng.choice([2, 4, 6, 8])   # some exceed Path-A 5M
+            rate = '%dM' % self.rng.choice(rate_choices)   # some exceed Path-A 5M
             self.flow(src, dst, port=port, udp=udp, rate=rate if udp else None,
                       dur=blen, start=start)
             port += 1
