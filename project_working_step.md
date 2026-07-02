@@ -141,7 +141,14 @@ result. Run `/peer-reviewer` after each PHASE.
   - Test (unit): on a hand-drawn graph, returns the known k paths in order.
   - PASS: correct k paths; excludes the failed link/node.
 
-- [ ] **S2.2 — Scoring + selection (the new part).**
+- [x] **S2.2 — Scoring + selection (the new part).** DONE 2026-07-01:
+    `framework/agents/resolver.py` — objective `w1(−latency)+w2(capacity)+w3(−loss)+
+    w4(−hops)` with per-dimension min-max normalization (scale-free weights);
+    `Resolver.select()` returns best + ranked; `flow_plan()` emits per-switch
+    (dpid, eth_dst, out_port) fwd+rev entries for OFPFlowMod actuation. Unit test
+    `tests/test_resolver.py` -> "S2.2 PASS": dominant-path, weight-sensitivity
+    (lat->A vs cap->C from same candidates), loss avoidance via link_state, flow_plan
+    ports match spec. See `docs/s2_2_results.txt`.
   - Build: `framework/agents/resolver.py` — score each candidate by an objective
     `w1(−latency)+w2(capacity)+w3(−loss)+w4(−hops)`; select the best; hand ports to
     `actuation.py` to install via `OFPFlowMod`.
@@ -235,7 +242,7 @@ curve) is what makes it *novel*.
 |-------|------|--------|
 | 0 Foundation | S0.1–S0.4 | TODO |
 | 1 Detect@scale | S1.1–S1.7 | TODO (reuse existing telemetry/eval) |
-| 2 Resolver | S2.1–S2.6 | IN PROGRESS (S2.1 done) |
+| 2 Resolver | S2.1–S2.6 | IN PROGRESS (S2.1, S2.2 done) |
 | 3 Learner | S3.1–S3.4 | TODO |
 | 4 Publish | S4.1–S4.4 | TODO |
 
