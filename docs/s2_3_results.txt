@@ -1,0 +1,35 @@
+S2.3 — Recovery baselines (upper/lower bounds)                     PASS
+================================================================================
+Build:  baselines/  (uniform selector contract, driven by one loop in S2.5)
+          select(graph, src, dst, link_state=None, seed=None, k=3) -> path|None
+        `graph` is the live active-graph (failed element already removed), so every
+        returned path is fault-avoiding by construction. Only the oracle may read
+        the true link_state.
+  - base.py            shared contract + path_is_viable()
+  - shortest_path.py   ShortestPath  : min-latency Dijkstra on current graph;
+                       adapts topology, BLIND to loss/bw/congestion (standard baseline)
+  - fixed_failover.py  FixedFailover : pre-provisioned ordered backup list frozen
+                       offline from the nominal graph (hops, then delay); returns the
+                       first still-up backup; never recomputes, ignores link_state.
+                       Models the OpenFlow fast-failover group (controller/failover_agent.py).
+  - random_path.py     RandomPath    : uniform random viable candidate, seeded (control)
+  - oracle_path.py     OraclePath    : Resolver objective with the TRUE link_state =
+                       full-knowledge upper bound (SHIELD only sees estimates). S2.5
+                       gate = SHIELD within ~10% of this.
+
+Test:   tests/test_baselines.py  ->  "S2.3 PASS"
+  [1] All four return valid, fault-avoiding paths on the healthy mesh AND after a
+        node failure (s2 excluded -> s2 absent, still viable).
+  [2] shortest_path keeps lossy Path A (loss-blind); oracle avoids A under 60% loss
+        on s1-s2 (full knowledge) -- the distinction S2.5 exploits.
+  [3] fixed_failover uses its pre-decided order (Path A healthy), unchanged by
+        link_state, and drops to the next backup when A's link is down.
+  [4] random_path is seed-reproducible and spans >=2 of the 3 candidates over seeds.
+
+Regression: S2.1 + S2.2 + S2.3 unit tests all green.
+
+PASS gate (from project_working_step.md): "each returns a valid path."  MET, plus
+the behavioural distinctions S2.5 depends on are verified.
+
+Next: S2.4 — framework/controller/shield_app.py (Ryu closed loop: telemetry ->
+detector -> resolver -> actuator, failback on link-up), integration on mesh.py.

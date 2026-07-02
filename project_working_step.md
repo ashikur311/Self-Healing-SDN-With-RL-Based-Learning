@@ -154,7 +154,13 @@ result. Run `/peer-reviewer` after each PHASE.
     `actuation.py` to install via `OFPFlowMod`.
   - Test: given synthetic link states, picks the analytically-best path.
 
-- [ ] **S2.3 — Baselines (upper/lower bounds).**
+- [x] **S2.3 — Baselines (upper/lower bounds).** DONE 2026-07-01: `baselines/`
+    with a uniform `select(graph, src, dst, link_state, seed, k)` contract —
+    `shortest_path` (loss-blind Dijkstra), `fixed_failover` (pre-provisioned ordered
+    backups frozen offline, models the OF fast-failover group), `random_path` (seeded
+    control), `oracle_path` (Resolver objective + TRUE link_state = upper bound).
+    Unit test `tests/test_baselines.py` -> "S2.3 PASS": all return valid fault-avoiding
+    paths; shortest keeps lossy A while oracle avoids it. See `docs/s2_3_results.txt`.
   - Build: `baselines/{fixed_failover,shortest_path,random_path,oracle_path}.py`
     (oracle = best path with full knowledge = upper bound).
   - Test: each returns a valid path.
@@ -242,7 +248,7 @@ curve) is what makes it *novel*.
 |-------|------|--------|
 | 0 Foundation | S0.1–S0.4 | TODO |
 | 1 Detect@scale | S1.1–S1.7 | TODO (reuse existing telemetry/eval) |
-| 2 Resolver | S2.1–S2.6 | IN PROGRESS (S2.1, S2.2 done) |
+| 2 Resolver | S2.1–S2.6 | IN PROGRESS (S2.1–S2.3 done) |
 | 3 Learner | S3.1–S3.4 | TODO |
 | 4 Publish | S4.1–S4.4 | TODO |
 
