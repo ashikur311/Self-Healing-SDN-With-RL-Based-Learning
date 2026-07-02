@@ -191,18 +191,23 @@ Live experiments must be run as `.py` files with `sudo`, not typed line by line
 
 ## 8. The papers (what to submit)
 
-There are **two** paper files in `paper/`:
+There are **three** documents in `paper/`:
 
 | File | What it is | Use it? |
 |------|-----------|---------|
+| `paper/fydp_report_full.tex` | **The complete FYDP report** — all chapters, the completed Standards & Design Constraints chapter, the real experiments, the context diagram and Gantt charts | **This is the full report to submit** |
+| `paper/final.tex` | A shorter IEEE conference-style version (same work, condensed) | Use if a short paper is needed |
 | `paper/main.tex` | The original FYDP thesis paper (registered) | Keep as-is, do not edit |
-| `paper/final.tex` | **The complete submission paper** (thesis + all new work) | **This is the one we submit** |
 
-`final.tex` keeps the registered title, has all six authors + advisor, four figures,
-and every number is tagged `% [VERIFIED ...]` pointing to a file in `docs/`.
+`fydp_report_full.tex` follows the original report's table of contents, keeps all its
+existing content, fills in the sections that were only headings, and swaps the small
+testbed for the actual experiments. Every number is tagged `% [VERIFIED ...]` pointing
+to a file in `docs/`.
 
-Supporting files: `paper/references.bib` (the citations) and `paper/figures/` (the
-images). `paper/final_preview.html` is a quick browser preview you can print to PDF.
+Supporting files: `paper/references.bib` (citations for `final.tex`) and
+`paper/figures/` (all images, including the extracted context diagram and Gantt
+charts). `paper/final_preview.html` is a quick browser preview of the short version you
+can print to PDF.
 
 ---
 
@@ -212,16 +217,17 @@ This computer has no LaTeX installed, so the official PDF is built on Overleaf:
 
 1. Go to https://overleaf.com and create a **New Project → Blank Project** (or
    "Upload Project").
-2. Upload these from the `paper/` folder:
-   - `final.tex`
-   - `references.bib`
+2. Upload from the `paper/` folder:
+   - `fydp_report_full.tex` (the full report) **and/or** `final.tex` (the short version)
+   - `references.bib` (only needed for `final.tex`)
    - the whole `figures/` folder (keep the folder name `figures`).
-3. Set the main document to `final.tex`.
-4. Overleaf compiles automatically (it runs pdfLaTeX → BibTeX → pdfLaTeX twice).
-   Click **Recompile**, then **Download PDF**.
+3. Set the main document to `fydp_report_full.tex` (or `final.tex`).
+4. Click **Recompile**. Run it twice so the table of contents, list of figures/tables,
+   and references resolve, then **Download PDF**. (`final.tex` also needs a BibTeX pass:
+   pdfLaTeX → BibTeX → pdfLaTeX twice.)
 
-For a quick look without Overleaf, open `paper/final_preview.html` in a browser and
-choose Print → Save as PDF.
+For a quick look without Overleaf, open `paper/final_preview.html` (the short version)
+in a browser and choose Print → Save as PDF.
 
 ---
 

@@ -7,8 +7,10 @@ not a decision-only prototype.
 
 > **New here? Start with [`docs/TEAM_GUIDE.md`](docs/TEAM_GUIDE.md)** — a
 > beginner-friendly, step-by-step walkthrough of what we built, which file connects
-> to which, and where each result lives. The submission paper is
-> [`paper/final.tex`](paper/final.tex) (quick preview: open
+> to which, and where each result lives. The complete FYDP report is
+> [`paper/fydp_report_full.tex`](paper/fydp_report_full.tex) (all chapters, completed
+> Standards & Design Constraints, and the real experiments). A shorter IEEE-style
+> version is [`paper/final.tex`](paper/final.tex) (quick preview: open
 > [`paper/final_preview.html`](paper/final_preview.html) and Print → Save as PDF).
 
 - **Phase 1 (done):** the closed-loop recovery system + an honest, verified paper.
