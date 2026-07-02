@@ -207,7 +207,13 @@ result. Run `/peer-reviewer` after each PHASE.
 # PHASE 3 — M-C: LEARNER updates itself day-by-day   [~2–3 sessions]  ← the novelty
 *Proves: "update itself and learn." Needs the disk freed (S0.1) and a non-stationary world.*
 
-- [ ] **S3.1 — Experience store + reward.**
+- [x] **S3.1 — Experience store + reward.** DONE 2026-07-01: `framework/experience/
+    reward.py` (`compute_reward`: r = β·throughput − α·post_loss − recovery_time;
+    REWARD_ALPHA=0.5, REWARD_BETA=1.0) + `store.py` (`ExperienceStore`, stdlib
+    sqlite3+json, one row/recovery: ts/topology/fault/state/candidates/chosen/
+    outcome/reward; record/get/all/recent/by_fault/count/mean_reward; `stringify_state`
+    for frozenset link keys). Unit test `tests/test_experience.py` -> "S3.1 PASS":
+    reward math, nested-JSON round-trip, queries, file persistence. See `docs/s3_1_results.txt`.
   - Build: `framework/experience/store.py` (SQLite: state, fault, candidates, chosen,
     outcome) + `reward.py` (`r = −recovery_time − α·post_loss + β·throughput`).
   - Test (unit): write/read a recovery record round-trip; reward math correct.
@@ -265,7 +271,7 @@ curve) is what makes it *novel*.
 | 0 Foundation | S0.1–S0.4 | TODO |
 | 1 Detect@scale | S1.1–S1.7 | TODO (reuse existing telemetry/eval) |
 | 2 Resolver | S2.1–S2.6 | GATE PASS (S2.1–S2.5 done; S2.6 optional) |
-| 3 Learner | S3.1–S3.4 | TODO |
+| 3 Learner | S3.1–S3.4 | IN PROGRESS (S3.1 done) |
 | 4 Publish | S4.1–S4.4 | TODO |
 
 ## What already exists to reuse (don't rebuild)

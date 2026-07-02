@@ -1,0 +1,31 @@
+S3.1 — Experience store + reward (Learner foundation)             PASS
+================================================================================
+Build:
+  framework/experience/reward.py  — compute_reward(outcome, alpha, beta):
+      r = beta*throughput - alpha*post_loss - recovery_time   (higher = better)
+      A-priori weights REWARD_ALPHA=0.5 (per % loss), REWARD_BETA=1.0 (per Mb/s);
+      the only tunables, documented so every stored reward traces to the formula.
+  framework/experience/store.py   — ExperienceStore (stdlib sqlite3 + json,
+      dependency-free; db_path=':memory:' for tests). One row per recovery:
+      ts, topology, fault, state(JSON), candidates(JSON), chosen(JSON),
+      outcome(JSON), reward. Reward auto-computed from outcome when not supplied.
+      API: record(), get(), all(), recent(n), by_fault(), count(), mean_reward(),
+      close(). stringify_state() converts {frozenset({a,b}):v} link-state maps to
+      JSON-safe {'a-b':v}. This is the memory the S3.2 learner re-fits the Resolver
+      from (and holds out a validation slice against forgetting).
+
+Test:   tests/test_experience.py  ->  "S3.1 PASS"
+  [1] Reward math matches the documented formula exactly, incl. custom alpha/beta,
+      missing-key defaults, and good>bad ordering.
+  [2] record() round-trips: topology/fault/ts + nested JSON (state/candidates/
+      chosen/outcome) read back identical; auto reward == compute_reward(outcome).
+  [3] Queries: count, get, all (id order), recent(n) chronological tail, by_fault,
+      mean_reward all correct.
+  [4] File-backed DB persists across close/reopen.
+
+PASS gate (from project_working_step.md): "write/read a recovery record round-trip;
+reward math correct."  MET — [1]+[2] cover both; [3]+[4] add query/persistence cover.
+
+Next: S3.2 — framework/agents/learner.py: every N recoveries (a "day") re-fit the
+Resolver (and optionally Detector) from the store; hold out a validation set to
+detect catastrophic forgetting. Test: params change after update; validation scored.
