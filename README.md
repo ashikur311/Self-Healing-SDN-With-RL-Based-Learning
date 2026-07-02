@@ -5,6 +5,12 @@ OpenFlow telemetry, detects a link fault, and **automatically reprograms the dat
 plane (`OFPFlowMod`) to reroute traffic** onto a healthy path — a real closed loop,
 not a decision-only prototype.
 
+> **New here? Start with [`docs/TEAM_GUIDE.md`](docs/TEAM_GUIDE.md)** — a
+> beginner-friendly, step-by-step walkthrough of what we built, which file connects
+> to which, and where each result lives. The submission paper is
+> [`paper/final.tex`](paper/final.tex) (quick preview: open
+> [`paper/final_preview.html`](paper/final_preview.html) and Print → Save as PDF).
+
 - **Phase 1 (done):** the closed-loop recovery system + an honest, verified paper.
   Final Year Design Project (UIU, CSE, Group B1) — the project was **successful**.
 - **Phase 2 (planned):** grow it into a general AI framework — bigger topology,
