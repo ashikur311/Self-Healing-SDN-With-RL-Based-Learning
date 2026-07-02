@@ -218,7 +218,15 @@ result. Run `/peer-reviewer` after each PHASE.
     outcome) + `reward.py` (`r = −recovery_time − α·post_loss + β·throughput`).
   - Test (unit): write/read a recovery record round-trip; reward math correct.
 
-- [ ] **S3.2 — Learner loop.**
+- [x] **S3.2 — Learner loop.** DONE 2026-07-01: `framework/agents/learner.py`
+    (stdlib only). Re-fits the Resolver's objective weights from `ExperienceStore` via
+    per-dimension covariance(goodness, reward) (clip>=0, scale to mean 1) — discovers
+    capacity/loss as the reward drivers. Forgetting guard: split a validation slice
+    BEFORE fitting; accept only if held-out Pearson(score, reward) doesn't drop.
+    Bandit-honest (needs S3.3 exploration; rejects on-policy data). Unit test
+    `tests/test_learner.py` -> "S3.2 PASS": accepted update changes weights +
+    up-weights capacity; guards (no-signal/flat/too-few) no-op; store integration.
+    See `docs/s3_2_results.txt`.
   - Build: `framework/agents/learner.py` — every N recoveries (a "day"), update the
     Resolver (and optionally Detector) from the store; hold out a **validation set**
     to detect catastrophic forgetting.
@@ -271,7 +279,7 @@ curve) is what makes it *novel*.
 | 0 Foundation | S0.1–S0.4 | TODO |
 | 1 Detect@scale | S1.1–S1.7 | TODO (reuse existing telemetry/eval) |
 | 2 Resolver | S2.1–S2.6 | GATE PASS (S2.1–S2.5 done; S2.6 optional) |
-| 3 Learner | S3.1–S3.4 | IN PROGRESS (S3.1 done) |
+| 3 Learner | S3.1–S3.4 | IN PROGRESS (S3.1, S3.2 done) |
 | 4 Publish | S4.1–S4.4 | TODO |
 
 ## What already exists to reuse (don't rebuild)

@@ -1,0 +1,47 @@
+S3.2 — Learner loop (re-fit Resolver from experience)             PASS
+================================================================================
+Build:  framework/agents/learner.py  (stdlib only, like the store)
+  What is learned: the Resolver scores a path by w.goodness(path) (per-dim min-max
+  goodness of latency/capacity/loss/hops within the candidate set). The learner
+  estimates, per dimension, the covariance between a chosen path's goodness in that
+  dimension and its realized reward, clips at 0, scales to mean-weight 1, and sets
+  the Resolver's weights to that. Intuition: up-weight the path-features that have
+  historically predicted good recoveries -> the framework DISCOVERS the objective
+  instead of us hand-setting it (in the demo, capacity/loss emerge as the drivers,
+  matching the S2.5 hand-tuned recovery weights).
+
+  Forgetting guard: split a VALIDATION slice BEFORE fitting (val_fraction=0.3,
+  deterministic seeded shuffle); accept the new weights only if held-out fit quality
+  (Pearson corr between w.goodness(chosen) and reward) does not drop
+  (>= val_before - 1e-6); otherwise keep the old weights.
+
+  Bandit honesty: feedback is bandit (only the installed path's outcome is seen), so
+  this is an off-policy, correlational estimate that needs EXPLORATORY experience to
+  learn -- exploration is introduced by S3.3's non-stationary schedule. On purely
+  on-policy data the guard correctly REJECTS (verified during bring-up).
+
+  API: Learner(resolver, val_fraction).update(records, seed) -> report
+  {train_n, val_n, old_weights, new_weights, val_before, val_after, accepted, reason};
+  update_from_store(store, seed). Records must carry candidate QoS
+  (path+latency/capacity/loss/hops), which Resolver.select()['ranked'] already emits.
+
+Test:   tests/test_learner.py  ->  "S3.2 PASS"
+  [1] Exploratory experience with capacity/low-loss-driven reward -> update ACCEPTED,
+      Resolver weights CHANGE, capacity out-weighs the noise dims (latency/hops),
+      val_after >= val_before, val in [-1,1].
+  [2] chosen_goodness in [0,1]^4; val_score bounded; split made before fit
+      (train_n + val_n == N, val_n == 30%).
+  [3] Guards leave weights UNCHANGED (accepted=False): no-signal (random reward),
+      constant features (zero covariance -> 'no signal'), and too-few records.
+  [4] End-to-end: learn from a populated ExperienceStore -> weights update.
+
+PASS gate (from project_working_step.md): "model params change after an update;
+validation score computed."  MET — [1] shows changed params + val; [3] shows the
+forgetting/no-op guard.
+
+Regression: S2.1-S2.4 + S3.1 + S3.2 offline unit tests all green.
+
+Next: S3.3 — non-stationary schedule: in faultgen.py/traffic.py shift the fault/
+traffic distribution across "days" so there is genuinely something to adapt to
+(and it supplies the exploratory experience the learner needs). Test: distribution
+differs day-to-day (logged).
